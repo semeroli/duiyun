@@ -1,0 +1,26 @@
+{
+  // 对韵 · 智能对联生成器 —— Cloudflare Workers 部署配置
+  // ---------------------------------------------------------------
+  // 本项目是「零数据库」应用：收藏存在浏览器本地，服务端只有一个
+  // /api/generate 路由用来安全地调用 AI（不把 Key 暴露给浏览器）。
+  // 因此 **不需要 D1、不需要 KV、也不需要 R2** —— 只要一个 Worker + 静态资源。
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "duiyun",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-01-01",
+  // nodejs_compat                     Next.js 内部用到部分 Node API，必须开
+  // global_fetch_strictly_public      允许应用向外发起 fetch（调魔搭 API 必需）
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // OpenNext 需要的「自引用」服务绑定，service 名必须与上面的 name 完全一致，
+      // 改名时两处一起改
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "duiyun"
+    }
+  ]
+}

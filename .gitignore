@@ -1,0 +1,20 @@
+node_modules/
+.next/
+.open-next/
+.wrangler/
+out/
+build/
+dist/
+
+# 环境变量（含 AI Key，绝不入库）
+.env
+.env.local
+.env*.local
+.dev.vars
+
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+tsconfig.tsbuildinfo
+next-env.d.ts

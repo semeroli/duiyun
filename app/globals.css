@@ -1,0 +1,254 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ══════════════════════════════════════════════════════════════
+   主题变量
+   素雅宣纸 / 春节喜庆 / 夜读暗色 —— 只换变量，组件无需改类名
+   ══════════════════════════════════════════════════════════════ */
+
+:root,
+[data-theme="silk"] {
+  --bg: #faf7f2;
+  --bg-2: #f2ebe0;
+  --panel: rgba(255, 253, 249, 0.88);
+  --panel-solid: #fffdf9;
+  --ink: #2c2416;
+  --ink-soft: #5b4c38;
+  --ink-faint: #8b7a62;
+  --cinnabar: #c43d3d;
+  --stoneblue: #4a6b8a;
+  --gold: #b08a3e;
+  --line: rgba(44, 36, 22, 0.13);
+  --line-strong: rgba(44, 36, 22, 0.28);
+  --accent-soft: rgba(196, 61, 61, 0.09);
+  --shadow-rgb: 44, 36, 22;
+  --fiber: 0.5;
+  --vignette: rgba(44, 36, 22, 0.06);
+}
+
+[data-theme="spring"] {
+  --bg: #fff6ea;
+  --bg-2: #fdeada;
+  --panel: rgba(255, 251, 245, 0.9);
+  --panel-solid: #fffbf5;
+  --ink: #2f1a12;
+  --ink-soft: #6b3f2c;
+  --ink-faint: #9c7059;
+  --cinnabar: #c0271f;
+  --stoneblue: #4a6b8a;
+  --gold: #a8761f;
+  --line: rgba(150, 45, 30, 0.2);
+  --line-strong: rgba(150, 45, 30, 0.38);
+  --accent-soft: rgba(192, 39, 31, 0.1);
+  --shadow-rgb: 120, 45, 25;
+  --fiber: 0.35;
+  --vignette: rgba(160, 40, 25, 0.07);
+}
+
+[data-theme="night"] {
+  --bg: #171310;
+  --bg-2: #201a15;
+  --panel: rgba(38, 31, 25, 0.86);
+  --panel-solid: #241d17;
+  --ink: #eddfc0;
+  --ink-soft: #d2be95;
+  --ink-faint: #9c8763;
+  --cinnabar: #d2694a;
+  --stoneblue: #7e9dbb;
+  --gold: #d9b96a;
+  --line: rgba(237, 223, 192, 0.16);
+  --line-strong: rgba(237, 223, 192, 0.34);
+  --accent-soft: rgba(210, 105, 74, 0.14);
+  --shadow-rgb: 0, 0, 0;
+  --fiber: 0.3;
+  --vignette: rgba(0, 0, 0, 0.35);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-app text-ink font-kai antialiased;
+    min-height: 100dvh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* 宣纸底：纤维纹理 + 暖白渐变 + 四角晕染 */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background-color: var(--bg);
+    background-image:
+      radial-gradient(120% 90% at 50% -10%, rgba(255, 255, 255, 0.55), transparent 60%),
+      radial-gradient(90% 70% at 8% 100%, rgba(176, 138, 62, 0.07), transparent 65%),
+      radial-gradient(80% 60% at 96% 8%, var(--vignette), transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23f)' opacity='0.5'/%3E%3C/svg%3E");
+    background-size: auto, auto, auto, 180px 180px;
+    opacity: 1;
+  }
+
+  [data-theme="night"] body::before {
+    background-image:
+      radial-gradient(120% 90% at 50% -10%, rgba(217, 185, 106, 0.07), transparent 60%),
+      radial-gradient(90% 70% at 8% 100%, rgba(217, 185, 106, 0.05), transparent 65%),
+      radial-gradient(80% 60% at 96% 8%, var(--vignette), transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23f)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--cinnabar);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border-radius: 99px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-faint);
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  /* ── 宣纸面板 ─────────────────────────────────────────── */
+  .paper-panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset,
+      0 10px 34px -18px rgba(var(--shadow-rgb), 0.5);
+    backdrop-filter: blur(6px);
+  }
+
+  /* ── 竹帘纹理（细密竖条） ─────────────────────────────── */
+  .bamboo-veil {
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--line) 0 1px,
+      transparent 1px 9px
+    );
+  }
+
+  /* ── 卷轴轴头（左右两端的小圆木） ─────────────────────── */
+  .scroll-rod {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--gold) 55%, var(--ink)) 0%,
+      color-mix(in srgb, var(--gold) 80%, var(--ink)) 45%,
+      color-mix(in srgb, var(--gold) 45%, var(--ink)) 100%
+    );
+    box-shadow: 0 2px 10px -3px rgba(var(--shadow-rgb), 0.6),
+      0 0 0 1px rgba(var(--shadow-rgb), 0.15) inset;
+  }
+
+  /* ── 竖排题签 ─────────────────────────────────────────── */
+  .vertical-title {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: 0.28em;
+  }
+
+  /* ── 印章 ─────────────────────────────────────────────── */
+  .seal-face {
+    font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+    color: #fff8f4;
+    background: var(--cinnabar);
+    box-shadow: 0 0 0 2px var(--cinnabar) inset,
+      0 0 0 4px rgba(255, 255, 255, 0.55) inset,
+      0 6px 18px -8px rgba(var(--shadow-rgb), 0.6);
+    letter-spacing: 0.05em;
+  }
+
+  .divider-brush {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--line-strong) 18%,
+      var(--line-strong) 82%,
+      transparent
+    );
+  }
+
+  /* ── 平仄字块 ─────────────────────────────────────────── */
+  .tone-chip {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 1.9rem;
+    line-height: 1.15;
+    padding: 0.15rem 0.1rem;
+    border-radius: 5px;
+  }
+  .tone-chip.is-ping {
+    color: var(--stoneblue);
+  }
+  .tone-chip.is-ze {
+    color: var(--cinnabar);
+  }
+  .tone-chip.is-unknown {
+    color: var(--ink-faint);
+  }
+  .tone-chip.is-off {
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 1px var(--cinnabar) inset;
+  }
+
+  .ink-underline {
+    background-image: linear-gradient(transparent 62%, var(--accent-soft) 62%);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* 逐字落笔用的初始态（由 framer-motion 接管动画，这里只做无 JS 兜底） */
+  .ink-rest {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* 打印：只留正文，方便老师直接打印讲解稿 */
+@media print {
+  body::before {
+    display: none;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

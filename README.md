@@ -1,0 +1,275 @@
+# 对韵 · 智能对联生成器
+
+一款面向**语文教学与传统创作**的中文对联辅助工具。输入上联，为你对出下联，
+并从 **平仄 / 词性 / 意境 / 典故** 四个维度逐层拆解——既是创作工具，也是讲对联的教具。
+
+> 视觉：素雅文人风（宣纸暖白 + 松烟墨 + 朱砂红 + 石青蓝），留白克制。
+> 三套主题：素雅宣纸 / 春节喜庆 / 夜读暗色。
+
+---
+
+## 一、快速开始（2 分钟）
+
+```bash
+cd duiyun
+npm install          # 首次约 1~3 分钟
+npm run dev          # 打开 http://localhost:4311
+```
+
+**不需要任何 API Key 就能跑。** 没配 Key 时会自动使用内置语料
+（89 副名联 / 178 句句库 + 1555 条对仗词表 + 294 个入声常用字），平仄与词性解析照常工作。
+
+### 接入自己的 AI（可选）
+
+复制 `.env.example` 为 `.env.local`，填三行，然后**重启服务**：
+
+```ini
+AI_BASE_URL=https://api.deepseek.com/v1
+AI_API_KEY=你的密钥
+AI_MODEL=deepseek-chat
+```
+
+任何「OpenAI 兼容」的 `/chat/completions` 都能接，例如：
+
+| 平台 | AI_BASE_URL | AI_MODEL 示例 |
+|---|---|---|
+| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` |
+| 通义千问 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` |
+| 智谱 GLM | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` |
+| 魔搭 ModelScope | `https://api-inference.modelscope.cn/v1` | 清单里的任意对话模型 |
+| OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` |
+
+> **AI 挂了也不影响使用**：接口失败会自动降级到内置语料，并在界面上写明原因。
+> 上课演示时不会白屏。
+
+---
+
+## 二、功能与页面
+
+| 功能 | 说明 |
+|---|---|
+| 上句输入 | 任意字数（五言/七言优先），实时字数提示、示例一键填入 |
+| 对句生成 | AI 生成 3 个思路不同的候选；「换一换」重新生成 |
+| 多维解析 | 平仄对应 / 词性对仗 / 意境呼应 / 典故出处，手风琴式展开 |
+| 类型切换 | 传统对联 · 趣味谐音 · 现代金句 |
+| 收藏与卡片 | 收藏满意对句（存浏览器本地），一键导出 PNG 分享卡片 |
+| 创作引导 | 「对联知识小贴士」抽屉 + 学习模式侧栏（平仄规则、词性对照表） |
+| 三种场景 | 春节模式（红金主题写春联）· 学习模式（侧栏知识）· 分享模式（三种卡片比例） |
+
+---
+
+## 三、四维解析是怎么算出来的
+
+这是本项目最需要说清的一点：**平仄不交给 AI 算。**
+
+| 维度 | 实现方式 | 为什么这么定 |
+|---|---|---|
+| 平仄对应 | **纯本地算法**（`lib/tone.ts` + `pinyin-pro`） | 平仄是确定性规则，模型很容易算错还振振有词。本地算法可复核、零延迟，且界面能标出「入声字」。 |
+| 词性对仗 | **纯本地算法**（`lib/pos.ts` + 1555 条对仗词典） | 上下联必须用同一把尺子量，交给模型会出现两次结果不一致。 |
+| 意境呼应 | AI 优先，降级为本地意象类目模板 | 这是真正需要理解力的部分，模型确实做得比模板好。 |
+| 典故出处 | AI 优先，其次本地 34 条典故库关键词检索 | 模型能给更贴合的解释，但**明确要求它不许编造出典**。 |
+
+### 平仄口径（界面上会原样告诉用户）
+
+1. **今音取调**：阴平(1)、阳平(2) → 平声 ○；上声(3)、去声(4) → 仄声 ●；轻声 → × 不判定。
+2. **入声修正**：中古入声在普通话里已派入四声，「今读平声」的白、一、石、学……
+   古韵仍属仄声，按 294 字入声表改判为 ●，界面打「入」字角标。
+3. **多音字**：pinyin-pro 取日常读音，另有 18 个字在对联语境下按其习惯读法兜底。
+
+### 工整度分级
+
+`工整 ≥78%` / `较工整 ≥60%` / `宽松 ≥40%` / `待推敲 <40%`
+（分母是「可判定的位数」，读音未定的字不会冤枉用户。）
+
+---
+
+## 四、目录结构
+
+```
+duiyun/
+├─ app/
+│  ├─ layout.tsx            根布局（字体、主题首屏注入、SEO 元信息）
+│  ├─ page.tsx              主页面（状态编排层）
+│  ├─ globals.css           三套主题的 CSS 变量 + 宣纸纹理 + 组件层样式
+│  └─ api/generate/route.ts POST 生成对句；GET 运行时自检
+├─ components/
+│  ├─ NavBar.tsx            顶部导航 + 类型切换 + 主题/音效/学习开关
+│  ├─ LandscapeBg.tsx       淡墨远山 + 云雾漂移（+ 春节灯笼）
+│  ├─ UpperInput.tsx        上句输入（卷轴样式）
+│  ├─ LowerOutput.tsx       下句展示（逐字落笔）+ 换一换/收藏/卡片
+│  ├─ AnalysisPanels.tsx    四维解析手风琴
+│  ├─ ToneMarks.tsx         平仄 ○● 可视化
+│  ├─ CardStudio.tsx        分享卡片工坊（html-to-image 导出）
+│  ├─ TipsDrawer.tsx        对联知识小贴士
+│  ├─ LearningSidebar.tsx   学习模式侧栏（平仄规则 / 词性对照表）
+│  ├─ FavoritesDrawer.tsx   收藏抽屉
+│  ├─ InkLoader.tsx         砚台研磨加载动画
+│  ├─ Seal.tsx              印章
+│  └─ ui.tsx                Btn / Badge / Drawer / Modal / Panel
+└─ lib/
+   ├─ types.ts              全局类型契约（数据层与业务层唯一接口）
+   ├─ tone.ts               平仄计算（含缓存 + 入声修正）
+   ├─ pos.ts                分词与词性对仗（最长匹配）
+   ├─ analyze.ts            四维解析组装
+   ├─ localEngine.ts        本地对联引擎（两级：库命中 + 集句）
+   ├─ ai.ts                 AI 适配层（服务端专用，含 Key 指纹）
+   ├─ storage.ts            本地收藏与设置
+   ├─ sound.ts              Web Audio 合成「棋子落盘」音效
+   ├─ themes.ts             主题与卡片比例定义
+   └─ data/                 静态语料
+      ├─ library.ts         89 副名联（传统 45 / 谐音 18 / 金句 26）
+      ├─ lexicon.ts         342 条对仗词表（主表）
+      ├─ lexicon2.ts        932 条扩充卷
+      ├─ lexicon3.ts        259 条补遗卷（专补名联库查不到的字 + 复合数量词）
+      ├─ allusions.ts       34 条典故
+      ├─ tips.ts            20 条贴士 + 11 条平仄规则 + 9 行词性对照
+      └─ ruSheng.ts         294 个入声字
+```
+
+---
+
+## 五、本地引擎的两级策略
+
+当没有 AI Key（或 AI 调用失败）时，`lib/localEngine.ts` 按可信度从高到低出手：
+
+1. **名联库命中** —— 上联本来就在库里（精确相同 / 互为子串 / 同字数且过半字位雷同），
+   直接给成稿，带作者与出典。**这是最可靠的一级。**
+2. **集句** —— 库里没这句时，从库中**所有真实句子**（89 副联的上句 + 下句，共 178 句）里，
+   挑**平仄相对、词性相合**的整句来当对句。
+   集句本身就是对联的正规玩法（取古人成句成对），所以出来的每一句都是真句子：
+   读得通、有出处、可供模仿。代价是**语义未必呼应**，界面用「集句」徽标 + 出处说明讲清这个前提。
+
+门槛是分档的（先严后宽），但**最宽一档也死守「平仄相对率 ≥ 0.6」**——平仄都不相对，
+就不配叫对联，宁可少给候选。
+
+> 🔴 **刻意不做的事：把名联当"骨架"、逐词替换成"对仗词"。**
+> 认真试过，产出是「菊岸风影浊似海」「病树前纸万木书」「石有山犀答真街」这类东西。
+> 病根不在选词不准（每个替换词在词表里都合法），而在**骨架里没被替换的字
+> （病树、前、万木）描述的是骨架自己的场景**，与用户上联毫无关系 ——
+> 逐词替换注定留下语义残骸；连"同类别才能替换"的约束也救不回来
+> （只会变成「白树前头万木春」）。
+> 结论：**宁可给一句"真句子"，也不给"机器拼出来但不成话"的句子。**
+
+---
+
+## 六、部署
+
+### Cloudflare（Workers + OpenNext，官方推荐路径）
+
+> ⚠️ **2026 年起，Cloudflare 对 Next.js 的官方推荐已改为 Workers + OpenNext。**
+> 老的 `@cloudflare/next-on-pages`（Pages 专用适配器）已废弃，且**不支持 Next.js 15**；
+> Pages 现在只适合纯静态站。本项目用的就是官方推荐路径，配置在
+> `wrangler.jsonc` 与 `open-next.config.ts`。
+>
+> ✅ **不需要创建 D1、KV 或 R2** —— 这是零数据库应用（收藏存在浏览器本地），
+> 服务端只需要一个 Worker 加静态资源，部署时会自动创建。
+
+```bash
+npm install           # 装依赖（含 @opennextjs/cloudflare、wrangler）
+npm run preview       # 本地按 Workers 运行时预览，最接近线上效果
+npx wrangler login    # 首次部署前登录 Cloudflare 账号
+npm run deploy        # 构建并发布
+```
+
+配置 AI 密钥（**不要把 Key 写进代码或仓库**）：
+
+```bash
+npx wrangler secret put AI_API_KEY    # 魔搭访问令牌
+npx wrangler secret put AI_BASE_URL   # https://api-inference.modelscope.cn/v1
+npx wrangler secret put AI_MODEL      # 例如 Qwen/Qwen3-235B-A22B-Instruct-2507
+```
+
+> 非密钥类的值（如 `AI_BASE_URL`、`AI_MODEL`）也可以写在 `wrangler.jsonc` 的
+> `vars` 里；密钥一律用 `secret put`。**改完变量必须重新部署才生效。**
+
+也可以把 GitHub 仓库连到 Cloudflare 做自动部署：每次推到主分支就自动构建发布。
+
+### 通用 Node 环境
+
+```bash
+npm run build
+npm run start        # 监听 PORT 环境变量（未设置时用 3000），适合容器 / 平台部署
+npm run start:local  # 本地预览固定 4311 端口
+```
+
+### 单文件产物（standalone）
+
+要丢到一个「只给一个端口」的容器 / 平台上时，打成自包含产物最省事：
+
+```bash
+NEXT_OUTPUT_STANDALONE=1 npm run build
+cp -r .next/static  .next/standalone/.next/static
+cp -r public        .next/standalone/public      # 若没有 public 目录可跳过
+PORT=3000 HOSTNAME=0.0.0.0 node .next/standalone/server.js
+```
+
+`server.js` 会读 `PORT` 环境变量；容器里请让它绑 `0.0.0.0`。
+
+### Docker
+
+```dockerfile
+FROM node:22-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN NEXT_OUTPUT_STANDALONE=1 npm run build \
+ && cp -r .next/static .next/standalone/.next/static
+ENV NODE_ENV=production PORT=4311 HOSTNAME=0.0.0.0
+EXPOSE 4311
+CMD ["node", ".next/standalone/server.js"]
+```
+
+### 密钥
+
+密钥通过环境变量注入 `AI_API_KEY` / `AI_BASE_URL` / `AI_MODEL`，**不要写进镜像**。
+注意两点：
+
+1. 密钥**只在前端拿不到的服务端**（`app/api/generate/route.ts`）里用，前端 bundle 里没有它。
+2. **改完环境变量必须重新部署**才会生效（线上进程不会自己读到新值）。
+
+### 静态托管说明
+
+本项目用了 Next.js 的服务端接口（`/api/generate`）来保护 API Key。
+如果把纯静态产物丢到不支持 Serverless 的托管上，接口会 404 —— 此时页面会**自动降级**
+为浏览器内生成（内置语料 + 集句），功能仍然可用，只是没有 AI 加成。
+
+---
+
+## 七、验证清单（本地跑通后逐项点一遍）
+
+- [ ] 输入「春风又绿江南岸」→ 点「为我对句」→ 有下联逐字浮现
+- [ ] 展开「平仄对应」→ 有 ○● 符号串 + 逐位明细 + 结论文字
+- [ ] 展开「词性对仗」→ 有对照表，名词对名词标 ✓
+- [ ] 点「换一换」→ 句子变了，旧句是淡出而不是硬切
+- [ ] 点「收藏」→ 右上角计数 +1，打开收藏能看到、能载入、能删除
+- [ ] 点「生成卡片分享」→ 切换三种比例 → 下载 PNG，中文不缺字
+- [ ] 切「春节喜庆」主题 → 两侧灯笼出现，导出卡片也变红金
+- [ ] 切「夜读暗色」→ 深褐底金字，刷新后主题保持
+- [ ] 打开「学习模式」→ 右侧出现平仄规则与词性对照表
+- [ ] 手机宽度（<768px）→ 类型标签换行、无横向滚动条
+- [ ] 打开「音效开」→ 点「换一换」「收藏」有棋子落盘声
+
+### 本版的自动化验证记录
+
+| 验收 | 内容 | 结果 |
+|---|---|---|
+| HTTP 端到端（`_sl_check.mjs`） | 引擎自检 / 生成 3 候选 / 四维字段齐全 / 平仄定点答案 / 集句兜底 / 换一换 / 边界错误 / 首页 SSR | 52 项全绿 |
+| 本地引擎单测（`../_duiyun_dbg/run.cjs`） | 分词覆盖率 / 字数全等 / 候选差异度 / 换一换 / 名联库自检 / 词典自检 / 平仄定点 / 词性定点 | 90 项全绿 |
+| 真机截图（`_shots/run_shots.mjs`） | 素雅 / 春节 / 夜读三主题 + 生成 / 解析 / 卡片 / 收藏 / 贴士 / 学习侧栏 / 390px 手机端 | 11 张，内容校验全过 |
+
+---
+
+## 八、已知限制
+
+1. **词性识别依赖词典**：1555 条词表之外的词会记为「未知」并排除出工整度计算，
+   不会瞎猜。想要更高准确率，扩充 `lib/data/lexicon*.ts` 即可。
+2. **平仄按古韵**：偶有字（尤其是多音字）与某位老师的习惯读法不同，
+   `lib/tone.ts` 顶部的 `READING_OVERRIDE` 是唯一调音入口。
+3. **集句的语义未必呼应**：集句只保证「格律 + 词性」对得上，不保证意思相关。
+   要真正贴题的下联，得配 AI Key。所以界面上严格区分
+   「内置语料 / 集句 / AI 生成」三种来源。
+4. **收藏存浏览器本地**：换设备不同步，清浏览器数据会丢。
+   需要跨设备同步，得加后端（本项目刻意保持零数据库，降低部署门槛）。
+5. **卡片导出为位图**：中文长句在 1080px 宽度下若字号过小，
+   建议改用「横版 4:3」比例。
