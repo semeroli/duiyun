@@ -9,6 +9,7 @@
  *   - 平仄永远由本地算法覆盖，避免模型算错还理直气壮。
  */
 
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 import { aiKeyFingerprint, generateWithAi, getAiConfig, isAiConfigured } from "@/lib/ai";
 import { buildAnalysis } from "@/lib/analyze";
@@ -36,6 +37,42 @@ function fail(error: string, status = 400) {
   return NextResponse.json(body, { status });
 }
 
+/**
+ * 探针：读出 Worker 的**原始绑定**（只报变量名与长度，**绝不报值**）。
+ *
+ * 为什么不能直接看 process.env：OpenNext 启动时会用构建期烘焙进
+ * `next-env.mjs` 的值把 `process.env` 补齐，于是「变量压根不存在」和
+ * 「变量存在但值为空」表现出来一模一样（都是空字符串）。
+ * 只有 `getCloudflareContext().env` 是运行时真实绑定，能一眼分清。
+ *
+ * 排查线上「明明设了变量却读不到」时，看这里：
+ *   - apiKeyPresent=false  → Secret 根本没绑到这个 Worker 上（没保存 / 存到了别处）
+ *   - apiKeyPresent=true 且 apiKeyLength=0 → 绑上了但值是空的
+ */
+function envProbe() {
+  try {
+    const { env } = getCloudflareContext();
+    const raw = env as unknown as Record<string, unknown>;
+    const names = Object.keys(raw)
+      .filter((k) => k !== "ASSETS" && k !== "WORKER_SELF_REFERENCE")
+      .sort()
+      .slice(0, 20);
+    const keyVal = raw.AI_API_KEY;
+    return {
+      available: true,
+      names,
+      apiKeyPresent: "AI_API_KEY" in raw,
+      apiKeyLength: typeof keyVal === "string" ? keyVal.length : null,
+    };
+  } catch (e) {
+    // 本地 `next dev` 没有 Workers 上下文，走到这里属于正常
+    return {
+      available: false,
+      reason: e instanceof Error ? e.message.slice(0, 80) : "无法读取运行环境",
+    };
+  }
+}
+
 export async function GET() {
   const cfg = getAiConfig();
   const configured = isAiConfigured();
@@ -46,6 +83,7 @@ export async function GET() {
     model: configured ? cfg.model : null,
     endpoint: cfg.baseUrl,
     keyFingerprint: aiKeyFingerprint(),
+    envProbe: envProbe(),
     service: "对韵 · /api/generate",
   });
 }
