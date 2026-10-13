@@ -328,6 +328,7 @@ export async function generateWithAi(
 
 export interface ModelProbeRow {
   model: string;
+  heavy: boolean;
   noThink: boolean;
   status: number;
   ms: number;
@@ -339,30 +340,40 @@ export interface ModelProbeRow {
   error?: string;
 }
 
+export interface ProbeOptions {
+  models: string[];
+  /** true = 用线上真正那套系统提示词与输出规模（3 个候选、完整 JSON） */
+  heavy: boolean;
+  /** 关思考的两种常见写法都带上 */
+  noThink: boolean;
+  /** 是否带 response_format: json_object（线上默认带） */
+  jsonMode: boolean;
+  /** 提问用的上联（heavy 模式）或一句话（轻量模式） */
+  say: string;
+  /** 单个模型的超时 */
+  timeoutMs: number;
+  /** 并发跑（墙钟时间 = 最慢那个，而不是求和） */
+  parallel: boolean;
+}
+
 /**
  * 模型体检：拿线上这把 Key **挨个点名调用**候选模型，报出每个模型
- * 「正文产出 / 思考产出」的实际情况。
+ * 在真实负载下的「正文产出 / 思考产出 / 耗时」。
  *
- * 为什么需要它：魔搭上有不少推理模型会把输出额度先烧在「思考」上，
- * 正文一个字不吐（实测 deepseek-ai/DeepSeek-V4.1-Flash：思考 7557 字、
- * 正文 0 字、finish_reason=length）。光看模型名和官方清单根本判断不出来
- * —— `/v1/models` 里 35 个模型哪些能直接拿来用，只能点名实测。
+ * 🔴 为什么必须有 heavy 模式：一开始用「只回复两个字」去测，Qwen3.8-Flash-Next
+ * 1.1 秒就回来了，看着完美；可换成线上真正那套提示词（要 3 个候选 + 完整
+ * 解析 JSON）之后直接 60 秒超时。**拿极简提问去选模型会选错** —— 必须用
+ * 真实提示词与真实输出规模去量。
  *
- * 判据：`reasonLen === 0 且 contentLen > 0` 才是「干净可用」的模型。
+ * 判据：`reasonLen` 小且 `contentLen` 大、`ms` 在可接受范围内才是可用模型。
  */
-export async function probeModels(
-  cfg: AiConfig,
-  models: string[],
-  noThink: boolean,
-  say: string
-): Promise<ModelProbeRow[]> {
-  const rows: ModelProbeRow[] = [];
-
-  for (const model of models) {
+export async function probeModels(cfg: AiConfig, opts: ProbeOptions): Promise<ModelProbeRow[]> {
+  const one = async (model: string): Promise<ModelProbeRow> => {
     const t0 = Date.now();
     const row: ModelProbeRow = {
       model,
-      noThink,
+      heavy: opts.heavy,
+      noThink: opts.noThink,
       status: 0,
       ms: 0,
       finish: "-",
@@ -372,23 +383,34 @@ export async function probeModels(
       verdict: "请求失败",
     };
     try {
-      const body: Record<string, unknown> = {
-        model,
-        messages: [
-          { role: "system", content: "你是中文助手，回答极简。" },
-          { role: "user", content: say },
-        ],
-        max_tokens: 1200,
-        temperature: 0,
-      };
+      const body: Record<string, unknown> = opts.heavy
+        ? {
+            model,
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              { role: "user", content: userPrompt(opts.say, "classic", 3) },
+            ],
+            temperature: 0.95,
+            max_tokens: 3200,
+          }
+        : {
+            model,
+            messages: [
+              { role: "system", content: "你是中文助手，回答极简。" },
+              { role: "user", content: opts.say },
+            ],
+            max_tokens: 1200,
+            temperature: 0,
+          };
+      if (opts.jsonMode) body.response_format = { type: "json_object" };
       // 关思考的两种常见写法都带上，平台不认的字段一般会忽略
-      if (noThink) {
+      if (opts.noThink) {
         body.enable_thinking = false;
         body.chat_template_kwargs = { enable_thinking: false };
       }
 
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), cfg.timeoutMs);
+      const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs);
       let res: Response;
       try {
         res = await fetch(`${cfg.baseUrl}/chat/completions`, {
@@ -421,19 +443,23 @@ export async function probeModels(
         row.finish = String(ch0?.finish_reason ?? "-");
         row.contentLen = content.length;
         row.reasonLen = reasoning.length;
-        row.head = content.replace(/\s+/g, " ").slice(0, 40);
+        row.head = content.replace(/\s+/g, " ").slice(0, 60);
         row.verdict = content.trim() ? "ok" : reasoning.length ? "空正文（思考吃光额度）" : "无正文";
       }
     } catch (e) {
       const err = e as { name?: string; message?: string };
       row.error =
         err?.name === "AbortError"
-          ? `超时（${Math.round(cfg.timeoutMs / 1000)} 秒）`
+          ? `超时（${Math.round(opts.timeoutMs / 1000)} 秒）`
           : (err?.message ?? "未知错误");
     }
     row.ms = Date.now() - t0;
-    rows.push(row);
-  }
+    return row;
+  };
 
+  if (opts.parallel) return Promise.all(opts.models.map(one));
+
+  const rows: ModelProbeRow[] = [];
+  for (const model of opts.models) rows.push(await one(model));
   return rows;
 }

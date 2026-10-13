@@ -101,8 +101,8 @@ let lastProbeAt = 0;
 export async function GET(req: Request) {
   const url = new URL(req.url);
 
-  // GET /api/generate?probe=1[&models=A,B&nothink=1&say=...]
-  // 模型体检：挨个点名调用候选模型，报出「正文 / 思考」产出情况
+  // GET /api/generate?probe=1[&models=A,B][&heavy=1][&parallel=1][&nothink=1][&jsonmode=0][&tmo=45000]
+  // 模型体检：挨个点名调用候选模型，报出「正文 / 思考产出 + 耗时」
   if (url.searchParams.get("probe") === "1") {
     const now = Date.now();
     if (now - lastProbeAt < PROBE_COOLDOWN_MS) {
@@ -116,18 +116,35 @@ export async function GET(req: Request) {
         { status: 400 }
       );
     }
+    const parallel = url.searchParams.get("parallel") === "1";
     const asked = (url.searchParams.get("models") || "")
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean)
-      .slice(0, 8);
+      .slice(0, parallel ? 6 : 8);
     const list = asked.length ? asked : PROBE_DEFAULT_MODELS;
-    const noThink = url.searchParams.get("nothink") === "1";
-    const say = (url.searchParams.get("say") || "只回复两个字：可以").slice(0, 40);
+    const opted = {
+      models: list,
+      heavy: url.searchParams.get("heavy") === "1",
+      noThink: url.searchParams.get("nothink") === "1",
+      jsonMode: url.searchParams.get("jsonmode") !== "0",
+      say: (url.searchParams.get("say") || "只回复两个字：可以").slice(0, 40),
+      timeoutMs: Math.min(60000, Math.max(8000, Number(url.searchParams.get("tmo")) || cfg.timeoutMs)),
+      parallel,
+    };
 
     lastProbeAt = now;
-    const rows = await probeModels(cfg, list, noThink, say);
-    return NextResponse.json({ ok: true, current: cfg.model, noThink, say, rows });
+    const rows = await probeModels(cfg, opted);
+    return NextResponse.json({
+      ok: true,
+      current: cfg.model,
+      heavy: opted.heavy,
+      noThink: opted.noThink,
+      jsonMode: opted.jsonMode,
+      timeoutMs: opted.timeoutMs,
+      parallel: opted.parallel,
+      rows,
+    });
   }
 
   const cfg = getAiConfig();
