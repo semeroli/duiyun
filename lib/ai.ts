@@ -175,12 +175,21 @@ function normalizeCandidates(data: unknown, upperLen: number): AiCandidateRaw[] 
   return out;
 }
 
+/**
+ * 一次 chat/completions 调用。
+ *
+ * 🔑 `noThink` 是本项目**最关键的开关**：魔搭上主流模型都是推理模型，会把
+ * max_tokens 整段烧在「思考」上、正文一个字不吐（实测 3 个候选的真实负载下
+ * 烧掉 4000~8000 字思考、正文 0 字）。带上 enable_thinking:false 之后，
+ * 同样 5 个模型从「全部失败/超时」变成 8~13 秒产出 800~1100 字完整 JSON。
+ */
 async function postChat(
   cfg: AiConfig,
   upper: string,
   kind: CoupletKind,
   count: number,
-  withJsonMode: boolean
+  withJsonMode: boolean,
+  noThink: boolean
 ): Promise<Response> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), cfg.timeoutMs);
@@ -192,12 +201,17 @@ async function postChat(
         { role: "user", content: userPrompt(upper, kind, count) },
       ],
       temperature: 0.95,
-      // 🔴 免费/推理类模型会把输出额度先花在「思考」上。1600 太小：
-      // 实测魔搭 deepseek-ai/DeepSeek-V4.1-Flash 跑满 1600 后正文一个字没吐
-      // （耗时 20 秒左右、content 为空）—— 留足额度才有正文。
+      // 留足额度：万一没有关掉思考（平台不认那个参数），大额度还能给正文
+      // 留下一点空间，不至于一个字都吐不出来
       max_tokens: 3200,
     };
     if (withJsonMode) body.response_format = { type: "json_object" };
+    if (noThink) {
+      // 关思考的两种常见写法都带上：不认的字段平台一般会忽略，
+      // 万一 400 了，generateWithAi 会自动退回不带它们的版本重试
+      body.enable_thinking = false;
+      body.chat_template_kwargs = { enable_thinking: false };
+    }
 
     return await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
@@ -265,12 +279,20 @@ export async function generateWithAi(
   count: number,
   cfg: AiConfig = getAiConfig()
 ): Promise<AiCandidateRaw[]> {
-  let res: Response;
+  // 依次退让：首选「JSON 模式 + 关思考」；某个平台不认某个参数就退回，
+  // 以保证换平台时不至于一上来就 400。只有 400/422 才继续退。
+  const VARIANTS = [
+    { jsonMode: true, noThink: true },
+    { jsonMode: false, noThink: true },
+    { jsonMode: true, noThink: false },
+    { jsonMode: false, noThink: false },
+  ];
+
+  let res: Response | null = null;
   try {
-    res = await postChat(cfg, upper, kind, count, true);
-    if (res.status === 400 || res.status === 422) {
-      // 平台不支持 response_format，去掉重试一次
-      res = await postChat(cfg, upper, kind, count, false);
+    for (const v of VARIANTS) {
+      res = await postChat(cfg, upper, kind, count, v.jsonMode, v.noThink);
+      if (res.status !== 400 && res.status !== 422) break;
     }
   } catch (e) {
     const err = e as { name?: string; message?: string };
@@ -279,6 +301,7 @@ export async function generateWithAi(
     }
     throw new Error(`连接 AI 服务失败：${err?.message ?? "未知网络错误"}`);
   }
+  if (!res) throw new Error("AI 服务没有任何响应");
 
   const text = await res.text();
 

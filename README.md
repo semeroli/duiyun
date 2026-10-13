@@ -39,10 +39,12 @@ AI_MODEL=Qwen/Qwen3.8-Flash-Next
 | 智谱 GLM | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` |
 | OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` |
 
-> ⚠️ **魔搭上选模型要挑「不把输出额度烧在思考上」的**：推理型模型会把
-> `max_tokens` 全用在思考上、正文一个字不吐（实测 `deepseek-ai/DeepSeek-V4.1-Flash`
-> 思考 7557 字 / 正文 0 字）。选之前先跑一次体检：
-> `GET /api/generate?probe=1&models=模型A,模型B`（见「六、部署」）。
+> ⚠️ **魔搭上主流模型都是「推理模型」**：默认会把 `max_tokens` 整段烧在「思考」上、
+> 正文一个字不吐（3 个候选的真实负载下实测烧掉 4000~8000 字思考、正文 0 字）。
+> 代码里因此**默认带上 `enable_thinking: false` 关掉思考** —— 加上之后同样这批
+> 模型从「全部失败/超时」变成 8~13 秒产出 800~1100 字完整 JSON。
+> 换模型前建议先跑一次体检：
+> `GET /api/generate?probe=1&heavy=1&parallel=1&nothink=1`（见「六、部署」）。
 
 > `.env.local` **只影响本机**（它被 `.gitignore` 忽略，Cloudflare 构建时拿不到），
 > 线上配置见「六、部署」。
