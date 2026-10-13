@@ -18,3 +18,9 @@ npm-debug.log*
 Thumbs.db
 tsconfig.tsbuildinfo
 next-env.d.ts
+
+# 图标生成器：脚本和预览页入库，渲染出来的中间产物不入库
+# （成品在 public/ 下，已随源码入库）
+_icons/out/
+_icons/sheet-*.png
+_icons/_sheet_info.txt
