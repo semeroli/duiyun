@@ -31,7 +31,18 @@
   "vars": {
     // 任意「OpenAI 兼容」的 Chat Completions 端点，写到 /v1 为止
     "AI_BASE_URL": "https://api-inference.modelscope.cn/v1",
-    "AI_MODEL": "deepseek-ai/DeepSeek-V4.1-Flash",
+    // 🔴 一定要选「不把输出额度烧在思考上」的模型。
+    //    实测（2026-10-13 用本项目的 /api/generate?probe=1 挨个点名）：
+    //      Qwen/Qwen3.8-Flash-Next            思考 46 字 / 1.1s   ✅ 用它
+    //      Qwen/Qwen3.8-27B                   思考 28 字 / 1.6s   ✅ 备选
+    //      deepseek-ai/DeepSeek-V4-Flash-0731 思考 15 字 / 3.2s   ✅ 备选
+    //      stepfun-ai/Step-3.7-Flash          思考 137 字 / 2.9s
+    //      ZhipuAI/GLM-5.2                    思考 244 字 / 2.6s
+    //      Shanghai_AI_Laboratory/Intern-S2-Preview 思考 582 字
+    //      ZhipuAI/GLM-4.7-Flash              思考 170 字 / 41s（太慢）
+    //      MiniMax/MiniMax-M3                 直接 400
+    //      deepseek-ai/DeepSeek-V4.1-Flash    思考 7557 字 / 正文 0 字 ❌ 整篇思考，正文产出不了
+    "AI_MODEL": "Qwen/Qwen3.8-Flash-Next",
     // 单次请求超时（毫秒）。推理类模型会先想很久，留足余量；
     // 实测 Cloudflare 上 60 秒级的非流式请求可以正常存活
     "AI_TIMEOUT_MS": "60000"

@@ -26,18 +26,23 @@ npm run dev          # 打开 http://localhost:4311
 ```ini
 AI_BASE_URL=https://api-inference.modelscope.cn/v1
 AI_API_KEY=你的密钥
-AI_MODEL=deepseek-ai/DeepSeek-V4.1-Flash
+AI_MODEL=Qwen/Qwen3.8-Flash-Next
 ```
 
 任何「OpenAI 兼容」的 `/chat/completions` 都能接，例如：
 
 | 平台 | AI_BASE_URL | AI_MODEL 示例 |
 |---|---|---|
-| 魔搭 ModelScope | `https://api-inference.modelscope.cn/v1` | `deepseek-ai/DeepSeek-V4.1-Flash` |
+| 魔搭 ModelScope | `https://api-inference.modelscope.cn/v1` | `Qwen/Qwen3.8-Flash-Next` |
 | DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` |
 | 通义千问 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` |
 | 智谱 GLM | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` |
 | OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` |
+
+> ⚠️ **魔搭上选模型要挑「不把输出额度烧在思考上」的**：推理型模型会把
+> `max_tokens` 全用在思考上、正文一个字不吐（实测 `deepseek-ai/DeepSeek-V4.1-Flash`
+> 思考 7557 字 / 正文 0 字）。选之前先跑一次体检：
+> `GET /api/generate?probe=1&models=模型A,模型B`（见「六、部署」）。
 
 > `.env.local` **只影响本机**（它被 `.gitignore` 忽略，Cloudflare 构建时拿不到），
 > 线上配置见「六、部署」。
@@ -218,6 +223,24 @@ npx wrangler secret put AI_API_KEY    # 魔搭访问令牌
 ```
 
 **改完变量必须重新部署才生效。**
+
+### 换模型前先体检（省得白折腾）
+
+魔搭清单里有 35 个模型，但**光看名字判断不出哪个能用** —— 推理型模型会把
+输出额度先烧在「思考」上，正文一个字不吐。用这个接口挨个点名实测：
+
+```
+GET /api/generate?probe=1                      # 默认体检 8 个候选
+GET /api/generate?probe=1&models=A,B,C         # 指定模型（最多 8 个）
+GET /api/generate?probe=1&nothink=1            # 顺带试「关思考」参数
+```
+
+每个模型回报 `status / 耗时 / finish_reason / 正文长度 / 思考长度 / 正文开头`，
+判定 `ok` 的判据是「**思考长度 0~几十字且正文长度 > 0**」。有 15 秒冷却。
+
+顺带一提，`GET /api/generate` 不光是体检入口，它还是这套系统的**自检页**：
+`configured` / `engine` / `model` / `endpoint` / `keyFingerprint` / `envProbe`
+一眼看清「Key 有没有读到、往哪个地址、用的哪个模型」。
 
 也可以把 GitHub 仓库连到 Cloudflare 做自动部署：每次推到主分支就自动构建发布。
 

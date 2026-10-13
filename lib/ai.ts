@@ -22,9 +22,9 @@
 import { onlyHanzi } from "./tone";
 import { KIND_META, type AllusionAnalysis, type CoupletKind } from "./types";
 
-/** 与 wrangler.jsonc 的 vars 保持一致：换服务商时两处一起改 */
+/** 与 wrangler.jsonc 的 vars 保持一致：换服务商/换模型时两处一起改 */
 const DEFAULT_BASE_URL = "https://api-inference.modelscope.cn/v1";
-const DEFAULT_MODEL = "deepseek-ai/DeepSeek-V4.1-Flash";
+const DEFAULT_MODEL = "Qwen/Qwen3.8-Flash-Next";
 
 export interface AiConfig {
   baseUrl: string;
