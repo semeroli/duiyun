@@ -57,3 +57,26 @@ export function clientIp(req: Request): string {
   if (xff) return xff.split(",")[0].trim();
   return "unknown";
 }
+
+/**
+ * 把数据库错误翻成人话。
+ * ------------------------------------------------------------------
+ * 两条考虑：
+ *   ① **不要把 `D1_ERROR: no such table: users` 这种原文吐给用户** ——
+ *      既看不懂，也等于免费告诉别人「这台服务器上跑的是 SQLite、表名长这样」。
+ *   ② 但也别把线索全掐掉，否则出事时无从查起。
+ * 所以：原文进服务器日志（`console.error`），页面上只给人话。
+ * 想自己看原始错误，用 `/api/auth/me?selfcheck=1`。
+ */
+export function dbError(e: unknown, fallback: string): string {
+  const raw = e instanceof Error ? e.message : String(e);
+  console.error("[duiyun] 数据库操作失败:", raw);
+  if (/no such table/i.test(raw)) {
+    return "站点数据库还没建好，请稍后再试（管理员需要先在 Cloudflare D1 控制台执行建表语句）";
+  }
+  if (/D1_ERROR|Network connection lost|storage/i.test(raw)) {
+    return "数据库这会儿连不上，请稍后再试";
+  }
+  return fallback;
+}
+

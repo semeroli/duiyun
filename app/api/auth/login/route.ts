@@ -19,7 +19,7 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { getDb, now, type UserRow } from "@/lib/db";
-import { clientIp, fail, ok, readJson, withCookie } from "@/lib/http";
+import { clientIp, dbError, fail, ok, readJson, withCookie } from "@/lib/http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,8 +47,9 @@ export async function POST(req: Request) {
     return fail("这个账号尝试次数太多了，请 15 分钟后再试", 429);
   }
 
-  const db = getDb();
   try {
+    // getDb 也放在 try 里：绑定缺失时抛的错要能被下面的 dbError 接住
+    const db = getDb();
     const row = await db
       .prepare(
         "SELECT id, email, nickname, password_hash, role, status, must_change_password FROM users WHERE email = ?"
@@ -78,7 +79,7 @@ export async function POST(req: Request) {
       buildSessionCookie(token, isSecureRequest(req))
     );
   } catch (e) {
-    return fail(`登录失败：${e instanceof Error ? e.message : "未知错误"}`, 500);
+    return fail(dbError(e, "登录没成功，请稍后再试"), 500);
   }
 }
 

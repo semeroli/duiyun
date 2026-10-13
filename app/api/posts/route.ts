@@ -13,7 +13,7 @@
 
 import { currentUser } from "@/lib/auth";
 import { getDb, now, slugify } from "@/lib/db";
-import { fail, ok, readJson, str } from "@/lib/http";
+import { dbError, fail, ok, readJson, str } from "@/lib/http";
 import { toAdminItem, toListItem, type PostListRow } from "@/lib/posts";
 
 export const runtime = "nodejs";
@@ -39,7 +39,7 @@ export async function GET(req: Request) {
         .all<PostListRow>();
       return ok({ posts: rows.results.map(toAdminItem), total: rows.results.length, limit, offset });
     } catch (e) {
-      return fail(`读取失败：${e instanceof Error ? e.message : "未知错误"}`, 500);
+      return fail(dbError(e, "读取失败，请稍后再试"), 500);
     }
   }
 
@@ -112,6 +112,6 @@ export async function POST(req: Request) {
 
     return ok({ slug, status: publish });
   } catch (e) {
-    return fail(`发布失败：${e instanceof Error ? e.message : "未知错误"}`, 500);
+    return fail(dbError(e, "保存失败，请稍后再试"), 500);
   }
 }

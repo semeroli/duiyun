@@ -11,7 +11,7 @@
 
 import { currentUser } from "@/lib/auth";
 import { getDb, now } from "@/lib/db";
-import { fail, ok, readJson, str } from "@/lib/http";
+import { dbError, fail, ok, readJson, str } from "@/lib/http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,7 +36,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     if (!row) return fail("这篇文章不存在", 404);
     return ok({ post: row });
   } catch (e) {
-    return fail(`读取失败：${e instanceof Error ? e.message : "未知错误"}`, 500);
+    return fail(dbError(e, "读取失败，请稍后再试"), 500);
   }
 }
 
@@ -94,9 +94,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     await db.prepare(`UPDATE posts SET ${sets.join(", ")} WHERE id = ?`).bind(...values).run();
     return ok({ id: Number(id), updated: sets.length - 1 });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "未知错误";
+    const msg = e instanceof Error ? e.message : "";
     if (/UNIQUE/i.test(msg)) return fail("这个网址标识（slug）已经被别的文章占了", 409);
-    return fail(`保存失败：${msg}`, 500);
+    return fail(dbError(e, "保存失败，请稍后再试"), 500);
   }
 }
 
@@ -109,6 +109,6 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
     await getDb().prepare("DELETE FROM posts WHERE id = ?").bind(Number(id)).run();
     return ok({ deleted: Number(id) });
   } catch (e) {
-    return fail(`删除失败：${e instanceof Error ? e.message : "未知错误"}`, 500);
+    return fail(dbError(e, "删除失败，请稍后再试"), 500);
   }
 }

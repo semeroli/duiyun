@@ -18,7 +18,7 @@ import {
   sameOrigin,
 } from "@/lib/auth";
 import { getDb, now, type UserRow } from "@/lib/db";
-import { clientIp, fail, ok, readJson, withCookie } from "@/lib/http";
+import { clientIp, dbError, fail, ok, readJson, withCookie } from "@/lib/http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,9 +43,11 @@ export async function POST(req: Request) {
   if (!pc.ok) return fail(pc.reason ?? "密码不符合要求");
 
   const nickname = normalizeNickname(body.nickname, email);
-  const db = getDb();
 
   try {
+    // getDb 也放在 try 里：绑定缺失时抛的错要能被下面的 dbError 接住，
+    // 否则就是一个没有任何解释的 500
+    const db = getDb();
     const exists = await db.prepare("SELECT id FROM users WHERE email = ?").bind(email).first<{ id: number }>();
     if (exists) return fail("这个邮箱已经注册过了，直接登录吧", 409);
 
@@ -80,10 +82,10 @@ export async function POST(req: Request) {
       buildSessionCookie(token, isSecureRequest(req))
     );
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "未知错误";
+    const msg = e instanceof Error ? e.message : "";
     // 唯一索引冲突 = 并发下两个请求同时过了上面的 exists 检查
     if (/UNIQUE/i.test(msg)) return fail("这个邮箱已经注册过了，直接登录吧", 409);
-    return fail(`注册失败：${msg}`, 500);
+    return fail(dbError(e, "注册没成功，请稍后再试"), 500);
   }
 }
 

@@ -24,3 +24,6 @@ next-env.d.ts
 _icons/out/
 _icons/sheet-*.png
 _icons/_sheet_info.txt
+
+# 界面自检截图（_shots.mjs 生成的，看一眼就删，不入库）
+_shots_tmp/
