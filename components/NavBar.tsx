@@ -1,14 +1,20 @@
 "use client";
 
 /**
- * 顶部导航：灯笼标识 + 类型切换 + 右侧工具（音效 / 学习 / 收藏 / 主题）
+ * 顶部导航（工作台专用）：灯笼标识 + 类型切换 + 右侧工具
+ * ------------------------------------------------------------------
+ * 右侧依次是：对韵博客 / 音效 / 学习模式 / 收藏 / 主题 / 账号。
+ * 「对韵博客」放在工具区最前面而不是塞进「主题」那种下拉里 ——
+ * 它的目的是把人带去看文章，藏起来就没人点了。
  */
 
 import { AnimatePresence, motion } from "framer-motion";
+import Link from "next/link";
 import { useState } from "react";
 import { KIND_META, type CoupletKind } from "@/lib/types";
 import { THEMES, type ThemeId } from "@/lib/themes";
 import { Badge } from "./ui";
+import UserMenu from "./UserMenu";
 
 const KINDS: CoupletKind[] = ["classic", "homophone", "modern"];
 
@@ -40,8 +46,8 @@ export default function NavBar({
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-[var(--panel)] backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 md:px-6">
-        {/* 标识 */}
-        <div className="flex items-center gap-2.5">
+        {/* 标识：点回落地页。工作台是「里屋」，得让人随时能退回「门厅」 */}
+        <Link href="/" className="flex items-center gap-2.5" title="回到首页">
           <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden>
             <rect x="3" y="6" width="26" height="20" rx="4" fill="var(--cinnabar)" opacity=".92" />
             <rect x="6.5" y="9.5" width="19" height="13" rx="2.5" fill="none" stroke="var(--gold)" strokeWidth="1" opacity=".8" />
@@ -61,7 +67,7 @@ export default function NavBar({
             <div className="font-song text-lg tracking-[.25em] text-ink">对韵</div>
             <div className="mt-[3px] text-[10px] tracking-[.2em] text-inkFaint">智能对联生成器</div>
           </div>
-        </div>
+        </Link>
 
         {/* 类型切换 */}
         <nav className="order-last flex w-full items-center gap-1 rounded-lg border border-line bg-panelSolid/50 p-1 md:order-none md:ml-4 md:w-auto">
@@ -90,7 +96,15 @@ export default function NavBar({
         </nav>
 
         {/* 右侧工具 */}
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
+          <Link
+            href="/blog"
+            title="对韵博客：格律、典故与课堂用法"
+            className="rounded-md border border-cinnabar/40 bg-accentSoft px-2.5 py-2 font-song text-[13px] text-cinnabar transition-colors hover:border-cinnabar/70"
+          >
+            对韵博客
+          </Link>
+
           <button
             type="button"
             onClick={() => onSoundChange(!sound)}
@@ -199,6 +213,8 @@ export default function NavBar({
               )}
             </AnimatePresence>
           </div>
+
+          <UserMenu compact />
         </div>
       </div>
 

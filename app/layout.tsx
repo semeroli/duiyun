@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
   // 分享/收录用的绝对地址基准（不设的话 og:image 会变成 http://localhost:3000）
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://lwdy.de5.net"),
+  // 标题写全，不用 template 拼接 —— 否则「对韵博客」会拼成「对韵博客 · 对韵」
   title: "对韵 · 智能对联生成器",
   description:
     "面向学习与创作的中文对联辅助工具：输入上联，AI 对出下联，并从平仄、词性、意境、典故四个维度逐层解析。素雅文人风，开箱即用。",
@@ -71,7 +73,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {/* 登录态全站共享：落地页、博客、工作台都要显示「登录 / 昵称」 */}
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

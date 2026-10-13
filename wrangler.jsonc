@@ -1,9 +1,10 @@
 {
   // 对韵 · 智能对联生成器 —— Cloudflare Workers 部署配置
   // ---------------------------------------------------------------
-  // 本项目是「零数据库」应用：收藏存在浏览器本地，服务端只有一个
-  // /api/generate 路由用来安全地调用 AI（不把 Key 暴露给浏览器）。
-  // 因此 **不需要 D1、不需要 KV、也不需要 R2** —— 只要一个 Worker + 静态资源。
+  // 服务端有两块：
+  //   ① /api/generate       安全地调用 AI（不把 Key 暴露给浏览器）
+  //   ② 账号 / 博客 / 收藏   读写 D1 数据库（见下面的 d1_databases 绑定）
+  // 收藏默认仍存浏览器本地；登录后额外同步一份到云端（换设备可见）。
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "duiyun",
   "main": ".open-next/worker.js",
@@ -57,6 +58,27 @@
       // 改名时两处一起改
       "binding": "WORKER_SELF_REFERENCE",
       "service": "duiyun"
+    }
+  ],
+
+  // ─────────────────────────────────────────────────────────────────
+  //  D1 数据库：账号、会话、博客文章、评论、云端收藏
+  // ─────────────────────────────────────────────────────────────────
+  //  代码里这样取：
+  //      const { env } = getCloudflareContext();   // @opennextjs/cloudflare
+  //      await env.DB.prepare("SELECT ...").bind(...).first();
+  //
+  //  🔴 不要用 process.env.DB —— 运行时绑定不会进 process.env；
+  //     而且 OpenNext 会拿构建期烘焙值兜底，「绑定不存在」和「绑定没值」
+  //     在 process.env 里长得一模一样，排查起来白费功夫。
+  //
+  //  改 binding 名字的话，两处要一起改：本文件 + lib/db.ts。
+  //  建表 SQL 见 migrations/0001_init.sql。
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "duiyun",
+      "database_id": "c770053a-5cb3-42e0-bd14-0a3d5919e241"
     }
   ]
 }

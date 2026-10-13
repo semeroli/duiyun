@@ -221,6 +221,113 @@
   .ink-underline {
     background-image: linear-gradient(transparent 62%, var(--accent-soft) 62%);
   }
+
+  /* ── 文章正文（lib/markdown.ts 渲染出来的那段 HTML 的样式）──
+     全部靠后代选择器挂样式，所以 Markdown 渲染器只输出裸标签，
+     不用在字符串里拼类名 —— 排版想改只改这里一处。 */
+  .md-body {
+    font-size: 15px;
+    line-height: 2.05;
+    color: var(--ink-soft);
+    word-break: break-word;
+  }
+  .md-body > * + * {
+    margin-top: 1.15em;
+  }
+  .md-body h2,
+  .md-body h3,
+  .md-body h4,
+  .md-body h5 {
+    font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+    color: var(--ink);
+    letter-spacing: 0.06em;
+    line-height: 1.5;
+    margin-top: 1.9em;
+    margin-bottom: 0.5em;
+  }
+  .md-body h2 {
+    font-size: 21px;
+    padding-left: 12px;
+    border-left: 3px solid var(--cinnabar);
+  }
+  .md-body h3 {
+    font-size: 18px;
+  }
+  .md-body h4,
+  .md-body h5 {
+    font-size: 16px;
+  }
+  .md-body strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .md-body em {
+    font-style: normal;
+    color: var(--cinnabar);
+  }
+  .md-body del {
+    color: var(--ink-faint);
+  }
+  .md-body a {
+    color: var(--cinnabar);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .md-body code {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.9em;
+    background: var(--accent-soft);
+    color: var(--cinnabar);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  .md-body .md-pre {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .md-body .md-pre code {
+    background: none;
+    color: var(--ink-soft);
+    padding: 0;
+    font-size: inherit;
+  }
+  .md-body .md-quote {
+    border-left: 3px solid var(--gold);
+    background: color-mix(in srgb, var(--gold) 8%, transparent);
+    padding: 10px 16px;
+    border-radius: 0 6px 6px 0;
+    color: var(--ink-soft);
+  }
+  .md-body .md-list {
+    padding-left: 1.4em;
+    list-style: disc;
+  }
+  .md-body .md-list li {
+    margin-top: 0.35em;
+  }
+  .md-body ol.md-list {
+    list-style: decimal;
+  }
+  .md-body .md-hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--line-strong) 20%, var(--line-strong) 80%, transparent);
+    margin: 2em 0;
+  }
+  .md-body .md-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    margin: 0.4em auto;
+    display: block;
+  }
 }
 
 @layer utilities {
