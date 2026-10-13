@@ -325,3 +325,115 @@ export async function generateWithAi(
   }
   return candidates;
 }
+
+export interface ModelProbeRow {
+  model: string;
+  noThink: boolean;
+  status: number;
+  ms: number;
+  finish: string;
+  contentLen: number;
+  reasonLen: number;
+  head: string;
+  verdict: "ok" | "空正文（思考吃光额度）" | "无正文" | "请求失败";
+  error?: string;
+}
+
+/**
+ * 模型体检：拿线上这把 Key **挨个点名调用**候选模型，报出每个模型
+ * 「正文产出 / 思考产出」的实际情况。
+ *
+ * 为什么需要它：魔搭上有不少推理模型会把输出额度先烧在「思考」上，
+ * 正文一个字不吐（实测 deepseek-ai/DeepSeek-V4.1-Flash：思考 7557 字、
+ * 正文 0 字、finish_reason=length）。光看模型名和官方清单根本判断不出来
+ * —— `/v1/models` 里 35 个模型哪些能直接拿来用，只能点名实测。
+ *
+ * 判据：`reasonLen === 0 且 contentLen > 0` 才是「干净可用」的模型。
+ */
+export async function probeModels(
+  cfg: AiConfig,
+  models: string[],
+  noThink: boolean,
+  say: string
+): Promise<ModelProbeRow[]> {
+  const rows: ModelProbeRow[] = [];
+
+  for (const model of models) {
+    const t0 = Date.now();
+    const row: ModelProbeRow = {
+      model,
+      noThink,
+      status: 0,
+      ms: 0,
+      finish: "-",
+      contentLen: -1,
+      reasonLen: -1,
+      head: "",
+      verdict: "请求失败",
+    };
+    try {
+      const body: Record<string, unknown> = {
+        model,
+        messages: [
+          { role: "system", content: "你是中文助手，回答极简。" },
+          { role: "user", content: say },
+        ],
+        max_tokens: 1200,
+        temperature: 0,
+      };
+      // 关思考的两种常见写法都带上，平台不认的字段一般会忽略
+      if (noThink) {
+        body.enable_thinking = false;
+        body.chat_template_kwargs = { enable_thinking: false };
+      }
+
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), cfg.timeoutMs);
+      let res: Response;
+      try {
+        res = await fetch(`${cfg.baseUrl}/chat/completions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
+          body: JSON.stringify(body),
+          signal: ctrl.signal,
+          cache: "no-store",
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+
+      row.status = res.status;
+      const text = await res.text();
+      let data: unknown = null;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // 非 JSON，下面按错误处理
+      }
+
+      const o = data as Record<string, unknown> | null;
+      if (o && typeof o === "object" && !("choices" in o) && ("code" in o || "message" in o)) {
+        row.error = `错误信封 code=${String(o.code)} ${String(o.message ?? "").slice(0, 80)}`;
+      } else {
+        const content = pickContent(data);
+        const reasoning = pickReasoning(data);
+        const ch0 = (o as { choices?: Array<Record<string, unknown>> })?.choices?.[0];
+        row.finish = String(ch0?.finish_reason ?? "-");
+        row.contentLen = content.length;
+        row.reasonLen = reasoning.length;
+        row.head = content.replace(/\s+/g, " ").slice(0, 40);
+        row.verdict = content.trim() ? "ok" : reasoning.length ? "空正文（思考吃光额度）" : "无正文";
+      }
+    } catch (e) {
+      const err = e as { name?: string; message?: string };
+      row.error =
+        err?.name === "AbortError"
+          ? `超时（${Math.round(cfg.timeoutMs / 1000)} 秒）`
+          : (err?.message ?? "未知错误");
+    }
+    row.ms = Date.now() - t0;
+    rows.push(row);
+  }
+
+  return rows;
+}

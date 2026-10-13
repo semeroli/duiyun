@@ -14,6 +14,10 @@
  */
 const http = require("node:http");
 
+// 前置检查：dev server 必须指向本脚本的假模型（4312），
+// 否则测出来一堆 FAIL 全是「环境不对」，白白吓人一跳。
+const EXPECT_ENDPOINT = "127.0.0.1:4312";
+
 let MODE = "normal";
 
 const okJson = (obj) => JSON.stringify(obj);
@@ -128,6 +132,35 @@ function check(name, cond, detail) {
 const UPPER = "春眠不觉晓";
 
 (async () => {
+  const pre = await new Promise((resolve) => {
+    const req = http.get("http://127.0.0.1:4311/api/generate", { timeout: 8000 }, (res) => {
+      let d = "";
+      res.on("data", (c) => (d += c));
+      res.on("end", () => {
+        try {
+          resolve(JSON.parse(d));
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+    req.on("error", (e) => resolve({ err: e.message }));
+    req.on("timeout", () => {
+      req.destroy();
+      resolve({ err: "超时" });
+    });
+  });
+
+  if (!pre || pre.err || !String(pre.endpoint || "").includes(EXPECT_ENDPOINT)) {
+    console.log("⛔ 前置条件不满足，本测试不适用于当前 dev server。");
+    console.log("   期望 AI_BASE_URL 指向 http://" + EXPECT_ENDPOINT + "/v1");
+    console.log("   实际 endpoint = " + (pre && pre.endpoint ? pre.endpoint : JSON.stringify(pre)));
+    console.log("   请按下面这样重启 dev：");
+    console.log("   AI_BASE_URL=http://" + EXPECT_ENDPOINT + "/v1 AI_API_KEY=test-key-abcdefghij AI_MODEL=mock AI_TIMEOUT_MS=30000 \\");
+    console.log("     CODEBUDDY_SAFE_DELETE_ENABLED=0 npx next dev -p 4311");
+    process.exit(2);
+  }
+
   await new Promise((r) => mock.listen(4312, "127.0.0.1", r));
   console.log("桩件已就绪 → http://127.0.0.1:4312/v1");
 

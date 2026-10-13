@@ -11,7 +11,13 @@
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
-import { aiKeyFingerprint, generateWithAi, getAiConfig, isAiConfigured } from "@/lib/ai";
+import {
+  aiKeyFingerprint,
+  generateWithAi,
+  getAiConfig,
+  isAiConfigured,
+  probeModels,
+} from "@/lib/ai";
 import { buildAnalysis } from "@/lib/analyze";
 import { confidentLibraryHits, generateLocal, normalizeUpper } from "@/lib/localEngine";
 import {
@@ -73,7 +79,57 @@ function envProbe() {
   }
 }
 
-export async function GET() {
+/**
+ * 模型体检的默认候选（都是魔搭清单里的「Flash / 轻量」一档，
+ * 因为主要目的是找**不把额度烧在思考上**的模型）。
+ */
+const PROBE_DEFAULT_MODELS = [
+  "Qwen/Qwen3.8-Flash-Next",
+  "Qwen/Qwen3.8-27B",
+  "deepseek-ai/DeepSeek-V4-Flash-0731",
+  "ZhipuAI/GLM-4.7-Flash",
+  "ZhipuAI/GLM-5.2",
+  "stepfun-ai/Step-3.7-Flash",
+  "Shanghai_AI_Laboratory/Intern-S2-Preview",
+  "MiniMax/MiniMax-M3",
+];
+
+/** 体检会花掉真实的调用额度，加个冷却，防止被反复触发 */
+const PROBE_COOLDOWN_MS = 15000;
+let lastProbeAt = 0;
+
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+
+  // GET /api/generate?probe=1[&models=A,B&nothink=1&say=...]
+  // 模型体检：挨个点名调用候选模型，报出「正文 / 思考」产出情况
+  if (url.searchParams.get("probe") === "1") {
+    const now = Date.now();
+    if (now - lastProbeAt < PROBE_COOLDOWN_MS) {
+      const wait = Math.ceil((PROBE_COOLDOWN_MS - (now - lastProbeAt)) / 1000);
+      return NextResponse.json({ ok: false, error: `体检冷却中，请 ${wait} 秒后再试` }, { status: 429 });
+    }
+    const cfg = getAiConfig();
+    if (!isAiConfigured()) {
+      return NextResponse.json(
+        { ok: false, error: "还没读到 AI_API_KEY，体检无从谈起（先看同一接口的 envProbe）" },
+        { status: 400 }
+      );
+    }
+    const asked = (url.searchParams.get("models") || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+    const list = asked.length ? asked : PROBE_DEFAULT_MODELS;
+    const noThink = url.searchParams.get("nothink") === "1";
+    const say = (url.searchParams.get("say") || "只回复两个字：可以").slice(0, 40);
+
+    lastProbeAt = now;
+    const rows = await probeModels(cfg, list, noThink, say);
+    return NextResponse.json({ ok: true, current: cfg.model, noThink, say, rows });
+  }
+
   const cfg = getAiConfig();
   const configured = isAiConfigured();
   return NextResponse.json({
