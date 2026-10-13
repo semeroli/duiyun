@@ -227,6 +227,7 @@ function fromLibrary(
     note: base + kindNote + dirNote,
     homophone: entry.homophone,
     device: entry.device,
+    unsolved: entry.unsolved,
   };
 }
 
@@ -241,7 +242,9 @@ function fromJiju(upper: string, s: Sentence, kind: CoupletKind, analysis: Coupl
     analysis,
     note:
       `集句 · 取自「${s.from.upper}」的${s.half}句${author}。` +
-      "集句是对联的正规玩法（取古人成句成对），重格律与词性；语义未必与你这句呼应，可当格律范本参考。",
+      "注意：这不是你这副联的答案 —— 库里没有收录它，只能借古人成句来示范格律。" +
+      "集句只核平仄与词性，不管意思；若你的上联含机关（拆字、偏旁、谐音、数字等），" +
+      "集句一律破不了机关，须配 AI Key 才谈得上真的对上。",
   };
 }
 

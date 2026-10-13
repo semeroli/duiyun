@@ -154,6 +154,8 @@ export interface CoupletCandidate {
   homophone?: string;
   /** 机关对的「机关」说明（拆字 / 组字 / 同旁 / 回文等） */
   device?: string;
+  /** 该联是公认「绝对」时的说明（界面需醒目提示：这是没有标准答案的联） */
+  unsolved?: string;
 }
 
 export interface GenerateResponse {
@@ -207,6 +209,12 @@ export interface LibraryCouplet {
    * 所以这份说明是教与学里最要紧的一句，界面会单独以「机关」展示。
    */
   device?: string;
+  /**
+   * 传世「绝对」：公认至今没有公认佳对（如「钱塘江桥五行缺火」）。
+   * 写一句说明，界面会**醒目提示**，免得用户把库里收录的流传对句
+   * 当成标准答案 —— 这类联本来就没有标准答案，老实说清楚才是对的。
+   */
+  unsolved?: string;
 }
 
 export interface AllusionEntry {

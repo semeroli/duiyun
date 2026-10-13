@@ -114,6 +114,17 @@ export default function LowerOutput({
 
         {candidate && (
           <>
+            {candidate.unsolved && (
+              <div className="mt-3 rounded-md border border-cinnabar/35 bg-accentSoft/70 px-3 py-2.5">
+                <p className="font-song text-[12px] tracking-[.16em] text-cinnabar">
+                  传世绝对 · 至今无公认佳对
+                </p>
+                <p className="mt-1.5 text-[12px] leading-relaxed text-inkSoft">
+                  {candidate.unsolved}
+                </p>
+              </div>
+            )}
+
             <div className="divider-brush my-3" />
             <div className="flex flex-wrap items-center gap-2.5">
               <Btn variant="outline" onClick={onRefresh} disabled={loading} title="再想几个下句">

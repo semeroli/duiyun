@@ -174,6 +174,24 @@ async function postJson(path, body) {
     ok("机关说明进了「意境呼应」解析", !!(top && top.analysis.conception.summary.includes("樵夫") || (top && top.analysis.conception.summary.length > 20)));
   }
 
+  console.log("\n════ 4c. 传世绝对（必须给警示，不能让人当成标准答案）════");
+  {
+    const r = await postJson("/api/generate", { upper: "钱塘江桥五行缺火", kind: "classic", count: 3, seed: 0 });
+    const d = r.json;
+    const top = d && d.candidates && d.candidates[0];
+    ok("「钱塘江桥五行缺火」首候选来源是库内语料", !!(top && top.source === "local"), top ? `[${top.source}] ${top.lower}` : "（无候选）");
+    ok("带出 unsolved 警示字段", !!(top && typeof top.unsolved === "string" && /绝对/.test(top.unsolved)));
+    ok("带出五行偏旁机关", !!(top && typeof top.device === "string" && /偏旁/.test(top.device)));
+
+    const s = await postJson("/api/generate", { upper: "烟锁池塘柳", kind: "classic", count: 3, seed: 0 });
+    const sTop = s.json && s.json.candidates && s.json.candidates[0];
+    ok("「烟锁池塘柳」⇒「炮镇海城楼」", !!(sTop && sTop.lower === "炮镇海城楼"));
+
+    const j = await postJson("/api/generate", { upper: "荷塘月色清如水", kind: "classic", count: 3, seed: 0 });
+    const jj = ((j.json && j.json.candidates) || []).find((c) => c.source === "jiju");
+    ok("集句提示写明「不是你这副联的答案」", !!(jj && /不是你这副联的答案/.test(jj.note || "")));
+  }
+
   console.log("\n════ 5.「换一换」确实换出不同内容 ════");
   {
     const a = await postJson("/api/generate", { upper: "海内存知己", kind: "classic", count: 3, seed: 0 });

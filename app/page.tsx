@@ -203,6 +203,7 @@ export default function Home() {
             note: activeCandidate.note,
             homophone: activeCandidate.homophone,
             device: activeCandidate.device,
+            unsolved: activeCandidate.unsolved,
             conception: activeCandidate.analysis.conception.summary,
             allusion: activeCandidate.analysis.allusion.has
               ? activeCandidate.analysis.allusion
@@ -238,6 +239,7 @@ export default function Home() {
         note: f.note,
         homophone: f.homophone,
         device: f.device,
+        unsolved: f.unsolved,
       },
     ]);
     setActiveIdx(0);

@@ -32,6 +32,8 @@ export interface FavoriteItem {
   homophone?: string;
   /** 机关对的机关说明（拆字 / 组字 / 同旁等），与 note 一并存下来 */
   device?: string;
+  /** 公认「绝对」的说明，载入收藏时也要一起还原 */
+  unsolved?: string;
   conception?: string;
   allusion?: AllusionAnalysis;
   source?: CoupletSource;
