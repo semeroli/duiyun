@@ -17,7 +17,21 @@ import { getDb, type UserRow } from "./db";
 
 export const SESSION_COOKIE = "duiyun_session";
 
-/** 10 万次。OWASP 现在建议 60 万，但那是给普通服务器定的；免费 Worker 先按 10 万跑，实测后再调。 */
+/**
+ * 10 万次。这是**故意卡在上限**的，别往上调。
+ * ------------------------------------------------------------------
+ * 🔴 Cloudflare Workers 的 `crypto.subtle` 对 PBKDF2 有**硬上限 100,000 次迭代**，
+ *    超过就直接 500（实测 2026-10-13线上：100000 → 200 OK；
+ *    150000 / 180000 / 200000 / 300000 → 500 Internal Server Error，响应体为空）。
+ *    所以 OWASP 现在建议的 60 万次在免费版 Worker 上**根本跑不起来** —— 别照抄。
+ *
+ *    10 万配「每用户独立随机 salt」+ 服务端限流，对这个站够用。
+ *    将来若要提强度，两条路：① 换 scrypt / Argon2（Workers 原生支持 scrypt）；
+ *    ② 升级 Workers 付费版（CPU 上限更宽），但仍要实测那个 10 万的上限是否放开。
+ *
+ * ⚠️ 别用 `Date.now()` 量这个函数的耗时：Workers 的日期时钟**在纯计算期间不推进**
+ *    （只在 I/O 边界更新），量出来恒为 0 毫秒。想量就从外面量整条请求的墙钟时间。
+ */
 export const PBKDF2_ITERATIONS = 100_000;
 
 /** 会话有效期：30 天 */
