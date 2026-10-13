@@ -6,6 +6,10 @@
  *   ① 名联库命中 —— 用户上联与库中条目贴合（精确相同 / 互为子串 /
  *      同字数且过半字位雷同），直接把库里的下联作为候选。质量最高，
  *      常常还能带出作者与出典。
+ *      库中一副联的**上句和下句都参与比对** —— 名联常只有半副更出名
+ *      （如「此木为柴山山出」），用户把下联当上联打进来也该有答案。
+ *      「过半字位雷同」这一档还顺带认得出**一字之差的流传版本**：
+ *      权威本作「因火成烟夕夕多」，民间也写「因火生烟夕夕多」。
  *
  *   ② 集句 —— 库里没有贴合条目时，从库中**所有真实句子**（名联的
  *      上句 + 下句，共约 180 句）里，挑平仄相对、词性相合的**整句**
@@ -53,26 +57,53 @@ function rotate<T>(arr: T[], seed: number): T[] {
 /* ── ① 名联库打分 ───────────────────────────────────────── */
 
 /**
- * 只按「对用户上联的贴合度」打分，**不含任何类型加分**。
+ * 一句话与库中某一句的贴合度，**不含任何类型加分**。
  * 类型只用于排序优先级，绝不能参与「是否算命中」的判断 ——
  * 否则同类型的无关条目也会得分被选中，出现「7 字上联配 5 字下联」这种硬伤。
+ *
+ * 最后一档是**近似匹配**：同字数，且超过一半的字位完全相同。
+ * 这一档专为「一字之差的流传版本」准备 —— 例如权威本作「因火成烟夕夕多」，
+ * 民间也写「因火生烟夕夕多」，只差一个「成/生」，靠这一档才认得出来。
  */
-function scoreLibrary(upper: string, entry: LibraryCouplet): number {
-  if (entry.upper === upper) return 1000;
-  if (entry.upper.includes(upper) || upper.includes(entry.upper)) {
-    return 300 + Math.min(entry.upper.length, upper.length) * 2;
+function scoreLine(upper: string, line: string): number {
+  if (line === upper) return 1000;
+  if (line.includes(upper) || upper.includes(line)) {
+    return 300 + Math.min(line.length, upper.length) * 2;
   }
-  if (entry.upper.length === upper.length) {
+  if (line.length === upper.length) {
     let same = 0;
     for (let i = 0; i < upper.length; i++) {
-      if (upper[i] === entry.upper[i]) same += 1;
+      if (upper[i] === line[i]) same += 1;
     }
     if (same >= Math.max(2, Math.ceil(upper.length / 2))) return 60 + same * 12;
   }
   return 0;
 }
 
-function sortByScore(list: { e: LibraryCouplet; s: number }[]) {
+/**
+ * 库里一副联的**上句与下句都参与比对** —— 用户很可能把下联当上联打进来。
+ * 名联常常只有半副更出名（如「此木为柴山山出」），只比对 upper 会让这种
+ * 输入完全落空。反向命中时，答案取 entry.upper。
+ *
+ * 正反向同分（完全命中都算 1000），不做惩罚：方向只是「用户打的是哪半句」，
+ * 与答案的可信度无关。一个条目若正向已命中，就不再试反向。
+ */
+function matchLibrary(upper: string, entry: LibraryCouplet): { s: number; reversed: boolean } {
+  const forward = scoreLine(upper, entry.upper);
+  if (forward > 0) return { s: forward, reversed: false };
+  const backward = scoreLine(upper, entry.lower);
+  // 反向命中的答案就是 entry.upper；若它恰好等于用户输入，等于没给出东西，弃掉
+  if (backward > 0 && entry.upper !== upper) return { s: backward, reversed: true };
+  return { s: 0, reversed: false };
+}
+
+interface LibraryMatch {
+  e: LibraryCouplet;
+  s: number;
+  reversed: boolean;
+}
+
+function sortByScore(list: LibraryMatch[]) {
   return [...list].sort((a, b) => b.s - a.s || a.e.upper.length - b.e.upper.length);
 }
 
@@ -166,18 +197,22 @@ function jijuCandidates(
 function fromLibrary(
   upper: string,
   entry: LibraryCouplet,
-  requestedKind: CoupletKind
+  requestedKind: CoupletKind,
+  reversed = false
 ): CoupletCandidate {
+  // 反向命中时，库里的「上句」才是答案
+  const answer = reversed ? entry.upper : entry.lower;
   const base = entry.author ? `本地库收录 · ${entry.author}` : "本地库收录";
   const kindNote =
     entry.kind === requestedKind ? "" : `；此联本身属「${KIND_META[entry.kind].label}」`;
+  const dirNote = reversed ? "（此句在库中原作上联，与你的句子正好成对）" : "";
   return {
     id: `lib-${hashId(entry.upper + entry.lower)}`,
     upper,
-    lower: entry.lower,
+    lower: answer,
     kind: requestedKind,
     source: "local",
-    analysis: buildAnalysis(upper, entry.lower, {
+    analysis: buildAnalysis(upper, answer, {
       conception: entry.conception,
       allusion: entry.allusion
         ? {
@@ -189,8 +224,9 @@ function fromLibrary(
           }
         : undefined,
     }),
-    note: base + kindNote,
+    note: base + kindNote + dirNote,
     homophone: entry.homophone,
+    device: entry.device,
   };
 }
 
@@ -225,7 +261,7 @@ export function generateLocal(
   // 命中条件只有两条：贴合度 > 0，且**上下联字数都与用户上联相等**。
   // 第二条是硬闸门 —— 缺了它就会把「铁肩担道义 / 妙手著文章」(5+5)
   // 配给 7 字上联，这是最容易出、也最丢人的一种错。
-  const matched = LIBRARY.map((e) => ({ e, s: scoreLibrary(upper, e) })).filter(
+  const matched: LibraryMatch[] = LIBRARY.map((e) => ({ e, ...matchLibrary(upper, e) })).filter(
     (x) => x.s > 0 && x.e.upper.length === upper.length && x.e.lower.length === upper.length
   );
 
@@ -233,7 +269,7 @@ export function generateLocal(
   // 保证「换一换」真能翻到不同的候选。
   const sameKind = sortByScore(matched.filter((x) => x.e.kind === kind));
   const otherKind = sortByScore(matched.filter((x) => x.e.kind !== kind));
-  const ordered = [
+  const ordered: LibraryMatch[] = [
     ...sameKind.filter((x) => x.s >= 1000),
     ...rotate(
       sameKind.filter((x) => x.s < 1000),
@@ -247,12 +283,14 @@ export function generateLocal(
   ];
 
   const out: CoupletCandidate[] = [];
+  // 去重要按**答案句**去，不能按库里的 lower —— 反向命中时答案在 upper 上
   const seen = new Set<string>();
-  for (const { e } of ordered) {
+  for (const { e, reversed } of ordered) {
     if (out.length >= count) break;
-    if (seen.has(e.lower)) continue;
-    seen.add(e.lower);
-    out.push(fromLibrary(upper, e, kind));
+    const answer = reversed ? e.upper : e.lower;
+    if (answer === upper || seen.has(answer)) continue;
+    seen.add(answer);
+    out.push(fromLibrary(upper, e, kind, reversed));
   }
 
   if (out.length < count) {
@@ -275,4 +313,20 @@ export function localEngineStats(): { couplets: number; lines: number; words: nu
 /** 句库中最长的句子字数 —— 用户在旁边提示「超出这个长度就得靠 AI 了」 */
 export function maxLineLength(): number {
   return sentencePool().reduce((m, s) => Math.max(m, s.line.length), 0);
+}
+
+/**
+ * 只取**完全命中**的库中原句（上句或下句与用户输入一字不差）。
+ *
+ * 用途：配好 AI 以后，接口通常直接返回模型结果，库里这些经过校对的名联
+ * 反而被埋掉了。但名联 —— 尤其拆字联这类「机关固定、只有一种对法」的联
+ * —— 库里的是权威版本，模型很可能对不上机关。所以接口会把这几条提到最前，
+ * 模型结果紧随其后。只挑完全命中，近似命中不乱插（交给 generateLocal 兜底）。
+ */
+export function confidentLibraryHits(upperRaw: string, kind: CoupletKind): CoupletCandidate[] {
+  const upper = normalizeUpper(upperRaw);
+  if (!upper) return [];
+  return LIBRARY.filter((e) => e.upper === upper || e.lower === upper)
+    .slice(0, 2)
+    .map((e) => fromLibrary(upper, e, kind, e.upper !== upper));
 }

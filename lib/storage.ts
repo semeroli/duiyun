@@ -30,6 +30,8 @@ export interface FavoriteItem {
   kind: CoupletKind;
   note?: string;
   homophone?: string;
+  /** 机关对的机关说明（拆字 / 组字 / 同旁等），与 note 一并存下来 */
+  device?: string;
   conception?: string;
   allusion?: AllusionAnalysis;
   source?: CoupletSource;

@@ -202,6 +202,7 @@ export default function Home() {
             kind: activeCandidate.kind,
             note: activeCandidate.note,
             homophone: activeCandidate.homophone,
+            device: activeCandidate.device,
             conception: activeCandidate.analysis.conception.summary,
             allusion: activeCandidate.analysis.allusion.has
               ? activeCandidate.analysis.allusion
@@ -236,6 +237,7 @@ export default function Home() {
         }),
         note: f.note,
         homophone: f.homophone,
+        device: f.device,
       },
     ]);
     setActiveIdx(0);

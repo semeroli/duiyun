@@ -12,7 +12,7 @@
 import { NextResponse } from "next/server";
 import { aiKeyFingerprint, generateWithAi, getAiConfig, isAiConfigured } from "@/lib/ai";
 import { buildAnalysis } from "@/lib/analyze";
-import { generateLocal, normalizeUpper } from "@/lib/localEngine";
+import { confidentLibraryHits, generateLocal, normalizeUpper } from "@/lib/localEngine";
 import {
   KIND_META,
   type CoupletCandidate,
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
   try {
     const raws = await generateWithAi(upper, kind, count);
 
-    const candidates: CoupletCandidate[] = raws.map((r) => ({
+    const aiCandidates: CoupletCandidate[] = raws.map((r) => ({
       id: `ai-${hashId(upper + r.lower)}`,
       upper,
       lower: r.lower,
@@ -109,9 +109,23 @@ export async function POST(req: Request) {
       homophone: r.homophone && r.homophone.trim() ? r.homophone : undefined,
     }));
 
-    // AI 只给了 1~2 条时，用本地库补足到 count，保证「换一换」有内容可翻
+    // 库里「完全命中」的原句永远排在最前 —— 库是逐条校对过的权威语料，
+    // 比模型可靠；拆字联这类「机关固定、只有一种对法」的联尤其如此，
+    // 模型很容易对不上机关（例如把「此木为柴山山出」对成别的意思）。
+    // 只挑完全命中，近似命中不插队，仍按原顺序留给本地引擎兜底。
+    const head = confidentLibraryHits(upper, kind);
+    const seen = new Set(head.map((c) => c.lower));
+    const candidates: CoupletCandidate[] = [...head];
+    for (const c of aiCandidates) {
+      if (candidates.length >= count) break;
+      if (seen.has(c.lower)) continue;
+      seen.add(c.lower);
+      candidates.push(c);
+    }
+
+    // AI 只给了 1~2 条（或被库内原句挤掉）时，用本地引擎补足到 count，
+    // 保证「换一换」有内容可翻
     if (candidates.length < count) {
-      const seen = new Set(candidates.map((c) => c.lower));
       for (const c of generateLocal(upper, kind, count, seed + candidates.length)) {
         if (candidates.length >= count) break;
         if (seen.has(c.lower)) continue;

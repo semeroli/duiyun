@@ -152,6 +152,8 @@ export interface CoupletCandidate {
   note?: string;
   /** 谐音类的「谐音点」说明 */
   homophone?: string;
+  /** 机关对的「机关」说明（拆字 / 组字 / 同旁 / 回文等） */
+  device?: string;
 }
 
 export interface GenerateResponse {
@@ -199,6 +201,12 @@ export interface LibraryCouplet {
   conception?: string;
   /** 谐音类专用：谐音点说明 */
   homophone?: string;
+  /**
+   * 联中的「文字机关」说明 —— 拆字（析字）、组字、同旁、叠字、回文等。
+   * 机关对只对上平仄词性是不够的，必须用同一种机关去对，
+   * 所以这份说明是教与学里最要紧的一句，界面会单独以「机关」展示。
+   */
+  device?: string;
 }
 
 export interface AllusionEntry {

@@ -149,6 +149,31 @@ async function postJson(path, body) {
     ok(`kind=${kind} 返回的 kind 字段正确`, !!(d && d.candidates.every((c) => c.kind === kind)));
   }
 
+  console.log("\n════ 4b. 拆字联 / 反向检索 / 近似匹配 ════");
+  {
+    // 机关对必须能对上「机关」，只对平仄词性不算数
+    const cases = [
+      ["因火生烟夕夕多", "此木为柴山山出", "近似匹配：一字之差（生/成）"],
+      ["此木为柴山山出", "因火成烟夕夕多", "反向检索：用户打的是另外半句"],
+      ["閒看门中月", "思耕心上田", "繁体「閒」才拆得出月"],
+      ["鸿是江边鸟", "蚕为天下虫", "拆字"],
+    ];
+    for (const [upper, want, why] of cases) {
+      const r = await postJson("/api/generate", { upper, kind: "classic", count: 3, seed: 0 });
+      const top = r.json && r.json.candidates && r.json.candidates[0];
+      ok(
+        `「${upper}」⇒「${want}」（${why}）`,
+        !!(top && top.lower === want && top.source === "local"),
+        top ? `实得 [${top.source}] ${top.lower}` : "（无候选）"
+      );
+    }
+    const r = await postJson("/api/generate", { upper: "因火生烟夕夕多", kind: "classic", count: 3, seed: 0 });
+    const top = r.json && r.json.candidates && r.json.candidates[0];
+    ok("命中拆字联时带出「机关」字段", !!(top && typeof top.device === "string" && /拆字/.test(top.device)),
+      top && top.device ? top.device.slice(0, 30) + "…" : "无 device");
+    ok("机关说明进了「意境呼应」解析", !!(top && top.analysis.conception.summary.includes("樵夫") || (top && top.analysis.conception.summary.length > 20)));
+  }
+
   console.log("\n════ 5.「换一换」确实换出不同内容 ════");
   {
     const a = await postJson("/api/generate", { upper: "海内存知己", kind: "classic", count: 3, seed: 0 });

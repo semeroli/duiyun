@@ -140,8 +140,13 @@ export default function LowerOutput({
               </div>
             </div>
 
-            {(candidate.note || candidate.homophone) && (
+            {(candidate.note || candidate.homophone || candidate.device) && (
               <div className="mt-3 space-y-1.5">
+                {candidate.device && (
+                  <p className="rounded border border-cinnabar/25 bg-accentSoft/60 px-2.5 py-1.5 text-[12px] leading-relaxed text-cinnabar">
+                    机关：{candidate.device}
+                  </p>
+                )}
                 {candidate.note && (
                   <p className="text-[12px] leading-relaxed text-inkFaint">{candidate.note}</p>
                 )}
