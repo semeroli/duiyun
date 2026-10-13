@@ -50,7 +50,7 @@ export default function LatestPosts({ limit = 3 }: { limit?: number }) {
     return (
       <div className="paper-panel px-5 py-8 text-center">
         <p className="font-song text-[15px] tracking-wider text-ink">还没发文章</p>
-        <p className="mx-auto mt-2 max-w-md text-[12.5px] leading-[1.9] text-inkFaint">
+        <p className="mx-auto mt-2 max-w-md text-[13px] leading-[1.9] text-inkFaint">
           这一栏会自动显示最新发布的文章。第一篇正在写，先去看看对联工具吧。
         </p>
         <Link
@@ -73,14 +73,14 @@ export default function LatestPosts({ limit = 3 }: { limit?: number }) {
         >
           <div className="pointer-events-none absolute inset-0 bamboo-veil opacity-[.28]" />
           <div className="relative flex h-full flex-col">
-            <div className="font-song text-[11px] tracking-[.2em] text-inkFaint">
+            <div className="font-song text-[12px] tracking-[.2em] text-inkFaint">
               {formatDate(p.publishedAt)}
             </div>
             <h3 className="mt-2 font-song text-[16px] leading-snug tracking-wide text-ink transition-colors group-hover:text-cinnabar">
               {p.title}
             </h3>
             {p.summary && (
-              <p className="mt-2 line-clamp-3 text-[12.5px] leading-[1.85] text-inkSoft">{p.summary}</p>
+              <p className="mt-2 line-clamp-3 text-[13px] leading-[1.85] text-inkSoft">{p.summary}</p>
             )}
             <span className="mt-auto pt-3 font-song text-[12px] text-cinnabar opacity-0 transition-opacity group-hover:opacity-100">
               读全文 →

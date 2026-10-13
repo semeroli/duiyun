@@ -40,10 +40,19 @@ await send("Page.navigate", { url: URL_ }); await sleep(6000);
 
 const r = await evalJs(`(() => {
   const out = { vh: innerHeight, headers: [], main: null, tap: [], sticky: [] };
+  // ① 先收集候选
+  const cands = [];
   for (const el of document.querySelectorAll('header, [class*="sticky"], nav')) {
     const b = el.getBoundingClientRect();
     const cs = getComputedStyle(el);
-    if (b.height > 8 && b.top < 300) out.headers.push({ tag: el.tagName.toLowerCase(), h: Math.round(b.height), top: Math.round(b.top), sticky: cs.position, cls: (el.className||'').toString().slice(0,55) });
+    if (b.height > 8 && b.top < 300) cands.push({ el, b, cs });
+  }
+  // ② 只在"没有别的候选包含它自己"时才计入 ——
+  //    否则 header 和它内部的 nav（类型切换条）会被重复相加，得出偏大的占屏比例。
+  for (const c of cands) {
+    const nested = cands.some((o) => o !== c && o.el.contains(c.el));
+    if (nested) out.sticky.push({ tag: c.el.tagName.toLowerCase(), h: Math.round(c.b.height), cls: (c.el.className||'').toString().slice(0,55) });
+    else out.headers.push({ tag: c.el.tagName.toLowerCase(), h: Math.round(c.b.height), top: Math.round(c.b.top), sticky: c.cs.position, cls: (c.el.className||'').toString().slice(0,55) });
   }
   const main = document.querySelector('main');
   if (main) { const b = main.getBoundingClientRect(); out.main = { top: Math.round(b.top), h: Math.round(b.height) }; }
@@ -66,9 +75,13 @@ const r = await evalJs(`(() => {
 })()`);
 
 console.log(`URL: ${URL_}  视口 ${W}×${H}\n`);
-console.log("【顶部固定/粘性条】");
+console.log("【顶部固定/粘性条】（已排除嵌在其中的子条，避免重复相加）");
 let total = 0;
 for (const h of r.headers) { total += h.h; console.log(`   ${h.tag} 高 ${h.h}px   top=${h.top}  position=${h.sticky}\n      .${h.cls}`); }
+if (r.sticky && r.sticky.length) {
+  console.log(`   — 以下 ${r.sticky.length} 个嵌在上述条内部，不计入合计（算了会重复）：`);
+  for (const s of r.sticky) console.log(`      ${s.tag} 高 ${s.h}px   .${s.cls}`);
+}
 console.log(`   ⇒ 合计 ${total}px，占屏高 ${(total / r.vh * 100).toFixed(0)}%\n`);
 if (r.main) console.log(`【main 起点】top=${r.main.top}px（${(r.main.top / r.vh * 100).toFixed(0)}% 屏高）`);
 if (r.firstInput) console.log(`【首个输入框】top=${r.firstInput.top}px  高 ${r.firstInput.h}px  「${r.firstInput.ph}」\n`);

@@ -15,7 +15,7 @@ export default function LearningSidebar() {
         <ol className="space-y-3">
           {TONE_RULES.map((r, i) => (
             <li key={r.title} className="flex gap-2.5">
-              <span className="mt-[3px] grid h-5 w-5 shrink-0 place-items-center rounded-full border border-line font-song text-[10px] text-inkFaint">
+              <span className="mt-[3px] grid h-5 w-5 shrink-0 place-items-center rounded-full border border-line font-song text-[12px] text-inkFaint">
                 {i + 1}
               </span>
               <div className="min-w-0">
@@ -36,7 +36,7 @@ export default function LearningSidebar() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[260px] border-collapse text-[12px]">
             <thead>
-              <tr className="text-left font-song text-[11px] tracking-[.16em] text-inkFaint">
+              <tr className="text-left font-song text-[12px] tracking-[.16em] text-inkFaint">
                 <th className="pb-2 pr-2 font-normal">词性</th>
                 <th className="pb-2 pr-2 font-normal">说明</th>
                 <th className="pb-2 font-normal">例词</th>
@@ -57,7 +57,7 @@ export default function LearningSidebar() {
             </tbody>
           </table>
         </div>
-        <p className="mt-3 rounded-md border border-line bg-panelSolid/50 px-3 py-2 text-[11px] leading-relaxed text-inkFaint">
+        <p className="mt-3 rounded-md border border-line bg-panelSolid/50 px-3 py-2 text-[12px] leading-relaxed text-inkFaint">
           口诀：名词对名词、动词对动词、形容词对形容词；数目对数目、颜色对颜色、方位对方位。
           实词对实词、虚词对虚词，切忌虚实混对。
         </p>

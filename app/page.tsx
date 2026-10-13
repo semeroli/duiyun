@@ -112,7 +112,7 @@ export default function LandingPage() {
           <section className="mx-auto max-w-6xl px-4 pb-6 pt-12 text-center md:px-6 md:pt-20">
             <div className="mb-5 flex items-center justify-center gap-3">
               <span className="h-[1px] w-8 bg-lineStrong" />
-              <span className="font-song text-[11px] tracking-[.45em] text-inkFaint">对韵</span>
+              <span className="font-song text-[12px] tracking-[.45em] text-inkFaint">对韵</span>
               <span className="h-[1px] w-8 bg-lineStrong" />
             </div>
 
@@ -187,11 +187,11 @@ export default function LandingPage() {
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="font-song text-[15px] tracking-[.16em] text-ink">{k.name}</h3>
-                    <span className="rounded-full border border-cinnabar/40 bg-cinnabar/10 px-2 py-[2px] font-song text-[11px] text-cinnabar">
+                    <span className="rounded-full border border-cinnabar/40 bg-cinnabar/10 px-2 py-[2px] font-song text-[12px] text-cinnabarInk">
                       {k.tag}
                     </span>
                   </div>
-                  <p className="mt-2 text-[12.5px] leading-[1.85] text-inkSoft">{k.desc}</p>
+                  <p className="mt-2 text-[13px] leading-[1.85] text-inkSoft">{k.desc}</p>
                 </div>
               ))}
             </div>
@@ -296,7 +296,7 @@ function Section({
     <section className="mx-auto max-w-6xl px-4 py-9 md:px-6 md:py-12">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="font-song text-[11px] tracking-[.38em] text-cinnabar">{eyebrow}</div>
+          <div className="font-song text-[12px] tracking-[.38em] text-cinnabar">{eyebrow}</div>
           <h2 className="mt-2 font-song text-[22px] leading-snug tracking-[.08em] text-ink md:text-[28px]">
             {title}
           </h2>
@@ -318,22 +318,22 @@ function ExampleCard() {
         <div className="pointer-events-none absolute inset-0 bamboo-veil opacity-[.28]" />
         <div className="relative px-5 py-6 md:px-8 md:py-8">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="font-song text-[11px] tracking-[.3em] text-inkFaint">示范一副</span>
-            <span className="rounded-full border border-emerald-600/40 bg-emerald-500/[.08] px-2 py-[2px] font-song text-[11px] text-emerald-700">
+            <span className="font-song text-[12px] tracking-[.3em] text-inkFaint">示范一副</span>
+            <span className="rounded-full border border-okInk/40 bg-okInk/[.08] px-2 py-[2px] font-song text-[12px] text-okInk">
               内置语料 · 原配
             </span>
           </div>
 
           <div className="mt-5 space-y-3 text-center">
             <div>
-              <div className="mb-1 font-song text-[10px] tracking-[.3em] text-inkFaint">上联</div>
+              <div className="mb-1 font-song text-[12px] tracking-[.3em] text-inkFaint">上联</div>
               <p className="font-song text-[22px] leading-relaxed tracking-[.22em] text-ink md:text-[28px]">
                 两个黄鹂鸣翠柳
               </p>
             </div>
             <div className="mx-auto h-[1px] w-16 bg-lineStrong" />
             <div>
-              <div className="mb-1 font-song text-[10px] tracking-[.3em] text-cinnabar">下联</div>
+              <div className="mb-1 font-song text-[12px] tracking-[.3em] text-cinnabar">下联</div>
               <p className="font-song text-[22px] leading-relaxed tracking-[.22em] text-ink md:text-[28px]">
                 一行白鹭上青天
               </p>
@@ -348,14 +348,14 @@ function ExampleCard() {
               { k: "典故", v: "出自杜甫《绝句》。诗人一句一景，四句四幅画，此为前两句。" },
             ].map((row) => (
               <div key={row.k} className="rounded-md border border-line bg-panelSolid/70 px-3.5 py-3">
-                <div className="font-song text-[11px] tracking-[.24em] text-cinnabar">{row.k}</div>
-                <p className="mt-1.5 text-[12.5px] leading-[1.85] text-inkSoft">{row.v}</p>
+                <div className="font-song text-[12px] tracking-[.24em] text-cinnabar">{row.k}</div>
+                <p className="mt-1.5 text-[13px] leading-[1.85] text-inkSoft">{row.v}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
-      <p className="mt-3 text-center text-[11px] text-inkFaint">
+      <p className="mt-3 text-center text-[12px] text-inkFaint">
         ↑ 这就是工具里的输出样式。换成你的上联，四个维度照样一条条讲给你。
       </p>
     </div>
@@ -377,7 +377,7 @@ function SiteFooter() {
           </span>
           <span className="h-[1px] w-8 bg-line" />
         </div>
-        <p className="text-[11px] leading-relaxed text-inkFaint">
+        <p className="text-[12px] leading-relaxed text-inkFaint">
           对韵 · 智能对联生成器 ｜ 平仄依古韵（含入声字修正），词性依常用对仗词表
         </p>
         <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">

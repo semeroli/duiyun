@@ -66,7 +66,7 @@ export default function FavoritesDrawer({
                     <p className="font-song text-[15px] leading-relaxed tracking-[.1em] text-cinnabar">
                       {f.lower}
                     </p>
-                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-inkFaint">
+                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-inkFaint">
                       <span>{KIND_META[f.kind]?.label ?? f.kind}</span>
                       {f.source && <span>· {sourceLabel(f.source)}</span>}
                       <span>· {new Date(f.at).toLocaleDateString("zh-CN")}</span>

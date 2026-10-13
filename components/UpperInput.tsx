@@ -44,14 +44,14 @@ export default function UpperInput({
 
         {/* 右上方题签 */}
         <div className="pointer-events-none absolute right-2 top-3 hidden md:block">
-          <div className="vertical-title rounded-b-md border border-line bg-accentSoft/70 px-1.5 py-2 font-song text-[12px] text-cinnabar">
+          <div className="vertical-title rounded-b-md border border-line bg-accentSoft/70 px-1.5 py-2 font-song text-[12px] text-cinnabarInk">
             上联
           </div>
         </div>
 
         <div className="relative">
           <div className="mb-2 flex items-center gap-2 md:hidden">
-            <span className="rounded border border-line bg-accentSoft/70 px-1.5 py-[2px] font-song text-[11px] text-cinnabar">
+            <span className="rounded border border-line bg-accentSoft/70 px-1.5 py-[2px] font-song text-[12px] text-cinnabarInk">
               上联
             </span>
           </div>
@@ -70,7 +70,7 @@ export default function UpperInput({
             spellCheck={false}
             placeholder="请输入上联…"
             aria-label="上联输入框"
-            className="w-full resize-none bg-transparent font-song text-[26px] leading-[1.75] tracking-[.16em] text-ink outline-none placeholder:text-inkFaint/55 md:text-[34px]"
+            className="w-full resize-none bg-transparent font-song text-[26px] leading-[1.75] tracking-[.16em] text-ink placeholder:text-inkFaint/55 md:text-[34px]"
           />
 
           <div className="divider-brush my-3" />
@@ -82,11 +82,11 @@ export default function UpperInput({
             {tooShort && <span className="text-[12px] text-cinnabar">至少 2 个字才能成对</span>}
             {n >= 2 && n < 5 && <span className="text-[12px] text-inkFaint">少于五言，属短联</span>}
             {(n === 5 || n === 7) && (
-              <span className="text-[12px] text-emerald-700">正是{n === 5 ? "五" : "七"}言，最见功力</span>
+              <span className="text-[12px] text-okInk">正是{n === 5 ? "五" : "七"}言，最见功力</span>
             )}
             {n > 7 && <span className="text-[12px] text-inkFaint">长联，考验铺陈</span>}
 
-            <span className="ml-auto hidden text-[11px] text-inkFaint md:inline">
+            <span className="ml-auto hidden text-[12px] text-inkFaint md:inline">
               Ctrl / ⌘ + Enter 快速成对
             </span>
           </div>
@@ -108,7 +108,7 @@ export default function UpperInput({
 
           {/* 示例 */}
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="font-song text-[11px] tracking-widest text-inkFaint">试试这些</span>
+            <span className="font-song text-[12px] tracking-widest text-inkFaint">试试这些</span>
             {EXAMPLES.map((ex, i) => (
               <motion.button
                 key={ex}
@@ -117,7 +117,7 @@ export default function UpperInput({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 * i, duration: 0.3 }}
                 onClick={() => onChange(ex)}
-                className="rounded-full border border-line px-3 py-1 font-song text-[12px] tracking-wide text-inkSoft transition-colors hover:border-cinnabar/50 hover:bg-accentSoft hover:text-cinnabar"
+                className="rounded-full border border-line px-3 py-2 font-song text-[12px] tracking-wide text-inkSoft transition-colors hover:border-cinnabar/50 hover:bg-accentSoft hover:text-cinnabarInk"
               >
                 {ex}
               </motion.button>

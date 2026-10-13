@@ -30,11 +30,11 @@ export default async function BlogIndex() {
 
         <main className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-14">
           <header className="mb-8">
-            <div className="font-song text-[11px] tracking-[.38em] text-cinnabar">对韵博客</div>
+            <div className="font-song text-[12px] tracking-[.38em] text-cinnabar">对韵博客</div>
             <h1 className="mt-2.5 font-song text-[28px] leading-snug tracking-[.08em] text-ink md:text-[36px]">
               从一副对联讲起
             </h1>
-            <p className="mt-3 max-w-2xl text-[13.5px] leading-[1.9] text-inkSoft">
+            <p className="mt-3 max-w-2xl text-[14px] leading-[1.9] text-inkSoft">
               讲格律怎么算、典故从哪来，也讲怎么把对联用进课堂。
             </p>
             <div className="divider-brush mt-6" />
@@ -71,7 +71,7 @@ export default async function BlogIndex() {
                   >
                     <div className="pointer-events-none absolute inset-0 bamboo-veil opacity-[.26]" />
                     <div className="relative">
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-song text-[11px] tracking-[.2em] text-inkFaint">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-song text-[12px] tracking-[.2em] text-inkFaint">
                         <span>{formatDate(p.publishedAt)}</span>
                         {p.viewCount > 0 && <span>· 读过 {p.viewCount} 次</span>}
                       </div>
@@ -86,7 +86,7 @@ export default async function BlogIndex() {
                           {p.tags.map((t) => (
                             <span
                               key={t}
-                              className="rounded-full border border-line px-2 py-[2px] font-song text-[11px] text-inkFaint"
+                              className="rounded-full border border-line px-2 py-[2px] font-song text-[12px] text-inkFaint"
                             >
                               {t}
                             </span>

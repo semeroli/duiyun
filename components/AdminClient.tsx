@@ -216,7 +216,7 @@ export default function AdminClient() {
               onClick={() => setDraft({ ...draft, status: "draft" })}
               className={`h-9 rounded-md border px-4 font-song text-[13px] transition-colors disabled:opacity-50 ${
                 draft.status === "draft"
-                  ? "border-cinnabar/50 bg-accentSoft text-cinnabar"
+                  ? "border-cinnabar/50 bg-accentSoft text-cinnabarInk"
                   : "border-lineStrong bg-panelSolid/60 text-ink hover:border-cinnabar/60"
               }`}
             >
@@ -228,7 +228,7 @@ export default function AdminClient() {
               onClick={() => setDraft({ ...draft, status: "published" })}
               className={`h-9 rounded-md border px-4 font-song text-[13px] transition-colors disabled:opacity-50 ${
                 draft.status === "published"
-                  ? "border-cinnabar/50 bg-accentSoft text-cinnabar"
+                  ? "border-cinnabar/50 bg-accentSoft text-cinnabarInk"
                   : "border-lineStrong bg-panelSolid/60 text-ink hover:border-cinnabar/60"
               }`}
             >
@@ -304,27 +304,27 @@ export default function AdminClient() {
               </summary>
               <ul className="mt-2.5 space-y-1">
                 <li>
-                  <code className="rounded bg-accentSoft px-1 text-cinnabar"># 标题</code> 一级小标题，
-                  <code className="rounded bg-accentSoft px-1 text-cinnabar">## 次一级</code> 往下类推
+                  <code className="rounded bg-accentSoft px-1 text-cinnabarInk"># 标题</code> 一级小标题，
+                  <code className="rounded bg-accentSoft px-1 text-cinnabarInk">## 次一级</code> 往下类推
                 </li>
                 <li>
-                  <code className="rounded bg-accentSoft px-1 text-cinnabar">**加粗**</code>、
-                  <code className="rounded bg-accentSoft px-1 text-cinnabar">*着重*</code>、
-                  <code className="rounded bg-accentSoft px-1 text-cinnabar">~~删除线~~</code>
+                  <code className="rounded bg-accentSoft px-1 text-cinnabarInk">**加粗**</code>、
+                  <code className="rounded bg-accentSoft px-1 text-cinnabarInk">*着重*</code>、
+                  <code className="rounded bg-accentSoft px-1 text-cinnabarInk">~~删除线~~</code>
                 </li>
                 <li>
-                  <code className="rounded bg-accentSoft px-1 text-cinnabar">- 一句一行</code> 无序列表；
-                  行首写 <code className="rounded bg-accentSoft px-1 text-cinnabar">1. </code> 有序列表
+                  <code className="rounded bg-accentSoft px-1 text-cinnabarInk">- 一句一行</code> 无序列表；
+                  行首写 <code className="rounded bg-accentSoft px-1 text-cinnabarInk">1. </code> 有序列表
                 </li>
                 <li>
-                  <code className="rounded bg-accentSoft px-1 text-cinnabar">&gt; 开头</code> 是引用块
+                  <code className="rounded bg-accentSoft px-1 text-cinnabarInk">&gt; 开头</code> 是引用块
                 </li>
                 <li>
-                  <code className="rounded bg-accentSoft px-1 text-cinnabar">---</code> 单独一行是分隔线
+                  <code className="rounded bg-accentSoft px-1 text-cinnabarInk">---</code> 单独一行是分隔线
                 </li>
                 <li>
                   图片要贴外链地址：
-                  <code className="rounded bg-accentSoft px-1 text-cinnabar">![说明](https://…)</code>
+                  <code className="rounded bg-accentSoft px-1 text-cinnabarInk">![说明](https://…)</code>
                   （本站暂时不存图片文件）
                 </li>
               </ul>
@@ -334,7 +334,7 @@ export default function AdminClient() {
           <section className="lg:sticky lg:top-24 lg:self-start">
             <div className="mb-2 flex items-center justify-between">
               <span className="font-song text-[12px] tracking-[.24em] text-inkFaint">实时预览</span>
-              <span className="text-[11px] text-inkFaint">与读者看到的样式一致</span>
+              <span className="text-[12px] text-inkFaint">与读者看到的样式一致</span>
             </div>
             <div
               className={`paper-panel max-h-[70vh] overflow-y-auto px-5 py-6 ${
@@ -364,7 +364,7 @@ export default function AdminClient() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-song text-[22px] tracking-[.1em] text-ink">管理后台</h1>
-          <p className="mt-1 text-[12.5px] text-inkFaint">
+          <p className="mt-1 text-[13px] text-inkFaint">
             登录为 {user.nickname}（{user.email}）
           </p>
         </div>
@@ -402,13 +402,13 @@ export default function AdminClient() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className={`rounded-full border px-2 py-[1px] font-song text-[11px] ${
+                    className={`rounded-full border px-2 py-[1px] font-song text-[12px] ${
                       p.status === "published"
-                        ? "border-emerald-600/40 bg-emerald-500/[.08] text-emerald-700"
+                        ? "border-okInk/40 bg-okInk/[.08] text-okInk"
                         : "border-line text-inkFaint"
                     }`}
                   >
-                    {p.status === "published" ? "已发布" : "草稿"}
+                    {p.status === "published" ? "● 已发布" : "○ 草稿"}
                   </span>
                   <button
                     type="button"
@@ -418,7 +418,7 @@ export default function AdminClient() {
                     {p.title}
                   </button>
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 font-song text-[11px] text-inkFaint">
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 font-song text-[12px] text-inkFaint">
                   <span>
                     {p.status === "published" ? formatDate(p.publishedAt) : `改于 ${formatDate(p.updatedAt)}`}
                   </span>
@@ -447,7 +447,7 @@ export default function AdminClient() {
                   type="button"
                   disabled={busy}
                   onClick={() => void remove(p)}
-                  className="rounded-md px-2.5 py-1.5 font-song text-[12px] text-inkFaint transition-colors hover:bg-accentSoft hover:text-cinnabar disabled:opacity-50"
+                  className="rounded-md px-2.5 py-1.5 font-song text-[12px] text-inkFaint transition-colors hover:bg-accentSoft hover:text-cinnabarInk disabled:opacity-50"
                 >
                   删除
                 </button>
@@ -463,7 +463,7 @@ export default function AdminClient() {
 /* ── 局部件 ─────────────────────────────────────────────── */
 
 const INPUT =
-  "w-full rounded-md border border-line bg-panelSolid px-3 py-2.5 font-kai text-[14px] text-ink outline-none transition-colors placeholder:text-inkFaint/70 focus:border-cinnabar/60";
+  "w-full rounded-md border border-lineInput bg-panelSolid px-3 py-2.5 font-kai text-[14px] text-ink transition-colors placeholder:text-inkFaint/70 focus:border-cinnabar/60";
 
 function Field({
   label,
@@ -477,8 +477,8 @@ function Field({
   return (
     <label className="block">
       <span className="mb-1.5 flex items-baseline justify-between">
-        <span className="font-song text-[12.5px] tracking-wider text-inkSoft">{label}</span>
-        {hint && <span className="text-[11px] text-inkFaint">{hint}</span>}
+        <span className="font-song text-[13px] tracking-wider text-inkSoft">{label}</span>
+        {hint && <span className="text-[12px] text-inkFaint">{hint}</span>}
       </span>
       {children}
     </label>

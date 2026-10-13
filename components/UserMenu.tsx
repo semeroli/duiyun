@@ -54,7 +54,7 @@ export default function UserMenu({ compact = false }: { compact?: boolean }) {
         </Link>
         <Link
           href="/register"
-          className="rounded-md border border-cinnabar/45 bg-accentSoft px-2.5 py-1.5 font-song text-[13px] text-cinnabar transition-colors hover:border-cinnabar/70"
+          className="rounded-md border border-cinnabar/45 bg-accentSoft px-2.5 py-1.5 font-song text-[13px] text-cinnabarInk transition-colors hover:border-cinnabar/70"
         >
           注册
         </Link>
@@ -75,15 +75,15 @@ export default function UserMenu({ compact = false }: { compact?: boolean }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-song text-[13px] transition-colors ${
-          open ? "bg-accentSoft text-cinnabar" : "text-inkSoft hover:bg-accentSoft hover:text-ink"
+          open ? "bg-accentSoft text-cinnabarInk" : "text-inkSoft hover:bg-accentSoft hover:text-ink"
         }`}
       >
-        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-cinnabar text-[10px] font-semibold text-white">
+        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-cinnabar text-[12px] font-semibold text-white">
           {user.nickname.slice(0, 1)}
         </span>
         <span className="max-w-[7rem] truncate">{user.nickname}</span>
         {user.role === "admin" && !compact && (
-          <span className="rounded-full border border-gold/50 px-1.5 text-[10px] text-gold">管理</span>
+          <span className="rounded-full border border-gold/50 px-1.5 text-[12px] text-goldInk">管理</span>
         )}
       </button>
 
@@ -98,7 +98,7 @@ export default function UserMenu({ compact = false }: { compact?: boolean }) {
           >
             <div className="px-2 py-1.5">
               <div className="truncate font-song text-[13px] text-ink">{user.nickname}</div>
-              <div className="truncate text-[11px] text-inkFaint">{user.email}</div>
+              <div className="truncate text-[12px] text-inkFaint">{user.email}</div>
             </div>
             <div className="my-1 divider-brush" />
             {items.map((it) => (
@@ -111,7 +111,7 @@ export default function UserMenu({ compact = false }: { compact?: boolean }) {
               </Link>
             ))}
             {user.mustChangePassword && (
-              <p className="mx-2 mt-1 rounded border border-amber-600/40 bg-amber-500/10 px-2 py-1.5 text-[11px] leading-relaxed text-amber-700">
+              <p className="mx-2 mt-1 rounded border border-warnInk/40 bg-warnInk/10 px-2 py-1.5 text-[12px] leading-relaxed text-warnInk">
                 建议尽快改密码（管理员重置过）。
               </p>
             )}
@@ -126,7 +126,7 @@ export default function UserMenu({ compact = false }: { compact?: boolean }) {
                 setOpen(false);
                 router.refresh();
               }}
-              className="block w-full rounded-md px-2 py-2 text-left font-song text-[13px] text-inkFaint transition-colors hover:bg-accentSoft hover:text-cinnabar disabled:opacity-50"
+              className="block w-full rounded-md px-2 py-2 text-left font-song text-[13px] text-inkFaint transition-colors hover:bg-accentSoft hover:text-cinnabarInk disabled:opacity-50"
             >
               {busy ? "正在登出…" : "登出"}
             </button>

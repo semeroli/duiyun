@@ -14,7 +14,7 @@ function Cell({ tc, side }: { tc: ToneChar | null; side: "up" | "lo" }) {
     return (
       <div className="tone-chip is-unknown opacity-40">
         <span className="font-song text-lg leading-none">　</span>
-        <span className="text-[11px] leading-none">—</span>
+        <span className="text-[12px] leading-none">—</span>
       </div>
     );
   }
@@ -22,13 +22,13 @@ function Cell({ tc, side }: { tc: ToneChar | null; side: "up" | "lo" }) {
   return (
     <div className={`tone-chip ${cls}`}>
       <span className="font-song text-lg leading-none">{tc.char}</span>
-      <span className="mt-[3px] text-[11px] leading-none">{toneMark(tc.tone)}</span>
-      <span className="mt-[2px] text-[9px] leading-none text-inkFaint">
+      <span className="mt-[3px] text-[12px] leading-none">{toneMark(tc.tone)}</span>
+      <span className="mt-[2px] text-[12px] leading-none text-inkFaint">
         {tc.pinyin || (side === "up" ? "" : "")}
       </span>
       {tc.byRuSheng && (
         <span
-          className="mt-[2px] rounded-[2px] bg-cinnabar/12 px-[3px] text-[8px] leading-[11px] text-cinnabar"
+          className="mt-[2px] rounded-[2px] bg-cinnabar/12 px-[3px] text-[12px] leading-[15px] text-cinnabarInk"
           title="入声字：古韵属仄声，普通话已读作平声"
         >
           入
@@ -46,13 +46,13 @@ export default function ToneMarks({ tone }: { tone: ToneAnalysis }) {
       {/* 符号串：一眼看整体格律 */}
       <div className="space-y-1.5 rounded-md border border-line bg-panelSolid/40 px-3 py-2.5">
         <div className="flex items-baseline gap-2.5 overflow-x-auto">
-          <span className="shrink-0 font-song text-[11px] tracking-[.2em] text-inkFaint">上联</span>
+          <span className="shrink-0 font-song text-[12px] tracking-[.2em] text-inkFaint">上联</span>
           <span className="font-song text-base tracking-[.32em] text-ink">
             {tone.upperMarks || "—"}
           </span>
         </div>
         <div className="flex items-baseline gap-2.5 overflow-x-auto">
-          <span className="shrink-0 font-song text-[11px] tracking-[.2em] text-inkFaint">下联</span>
+          <span className="shrink-0 font-song text-[12px] tracking-[.2em] text-inkFaint">下联</span>
           <span className="font-song text-base tracking-[.32em] text-ink">
             {tone.lowerMarks || "—"}
           </span>
@@ -84,9 +84,9 @@ export default function ToneMarks({ tone }: { tone: ToneAnalysis }) {
                 />
                 <Cell tc={p.lower} side="lo" />
                 <span
-                  className={`mt-1 text-[10px] leading-none ${
+                  className={`mt-1 text-[12px] leading-none ${
                     p.ok === true
-                      ? "text-emerald-600"
+                      ? "text-okInk"
                       : p.ok === false
                         ? "text-cinnabar"
                         : "text-transparent"
@@ -104,7 +104,7 @@ export default function ToneMarks({ tone }: { tone: ToneAnalysis }) {
       )}
 
       {/* 图例 + 结论 */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-inkFaint">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-inkFaint">
         <span className="inline-flex items-center gap-1">
           <span className="text-stoneblue">○</span>平声
         </span>
@@ -115,7 +115,7 @@ export default function ToneMarks({ tone }: { tone: ToneAnalysis }) {
           <span>×</span>轻声/多音，未判定
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="rounded-[2px] bg-cinnabar/12 px-[3px] text-cinnabar">入</span>入声字（古仄今平）
+          <span className="rounded-[2px] bg-cinnabar/12 px-[3px] text-cinnabarInk">入</span>入声字（古仄今平）
         </span>
       </div>
 

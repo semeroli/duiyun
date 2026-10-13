@@ -78,7 +78,7 @@ export default function SiteHeader() {
           <BrandMark />
           <span className="leading-none">
             <span className="block font-song text-lg tracking-[.25em] text-ink">对韵</span>
-            <span className="mt-[3px] block text-[10px] tracking-[.2em] text-inkFaint">智能对联生成器</span>
+            <span className="mt-[3px] block text-[12px] tracking-[.2em] text-inkFaint">智能对联生成器</span>
           </span>
         </Link>
 
@@ -90,7 +90,7 @@ export default function SiteHeader() {
                 key={l.href}
                 href={l.href}
                 className={`rounded-md px-3 py-1.5 font-song text-[13px] tracking-wider transition-colors ${
-                  active ? "bg-accentSoft text-cinnabar" : "text-inkSoft hover:bg-accentSoft hover:text-ink"
+                  active ? "bg-accentSoft text-cinnabarInk" : "text-inkSoft hover:bg-accentSoft hover:text-ink"
                 }`}
               >
                 {l.label}
@@ -108,7 +108,7 @@ export default function SiteHeader() {
               aria-expanded={themeOpen}
               title="外观与主题"
               className={`rounded-md px-2.5 py-1.5 font-song text-[13px] transition-colors ${
-                themeOpen ? "bg-accentSoft text-cinnabar" : "text-inkFaint hover:bg-accentSoft hover:text-ink"
+                themeOpen ? "bg-accentSoft text-cinnabarInk" : "text-inkFaint hover:bg-accentSoft hover:text-ink"
               }`}
             >
               主题
@@ -137,9 +137,9 @@ export default function SiteHeader() {
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-song text-[13px] text-ink">{t.label}</span>
-                          {S.theme === t.id && <span className="text-[11px] text-cinnabar">使用中</span>}
+                          {S.theme === t.id && <span className="text-[12px] text-cinnabar">使用中</span>}
                         </div>
-                        <div className="mt-0.5 text-[11px] text-inkFaint">{t.hint}</div>
+                        <div className="mt-0.5 text-[12px] text-inkFaint">{t.hint}</div>
                       </button>
                     ))}
                   </motion.div>
@@ -162,7 +162,7 @@ export default function SiteHeader() {
                 key={l.href}
                 href={l.href}
                 className={`shrink-0 rounded-md px-2.5 py-1 font-song text-[12px] transition-colors ${
-                  active ? "bg-accentSoft text-cinnabar" : "text-inkFaint"
+                  active ? "bg-accentSoft text-cinnabarInk" : "text-inkFaint"
                 }`}
               >
                 {l.label}

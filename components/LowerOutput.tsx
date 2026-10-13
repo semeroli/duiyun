@@ -50,14 +50,14 @@ export default function LowerOutput({
         />
 
         <div className="pointer-events-none absolute right-2 top-3 hidden md:block">
-          <div className="vertical-title rounded-b-md border border-line bg-accentSoft/70 px-1.5 py-2 font-song text-[12px] text-cinnabar">
+          <div className="vertical-title rounded-b-md border border-line bg-accentSoft/70 px-1.5 py-2 font-song text-[12px] text-cinnabarInk">
             下联
           </div>
         </div>
 
         <div className="relative min-h-[132px] md:min-h-[164px]">
           <div className="mb-2 flex items-center gap-2 md:hidden">
-            <span className="rounded border border-line bg-accentSoft/70 px-1.5 py-[2px] font-song text-[11px] text-cinnabar">
+            <span className="rounded border border-line bg-accentSoft/70 px-1.5 py-[2px] font-song text-[12px] text-cinnabarInk">
               下联
             </span>
           </div>
@@ -154,7 +154,7 @@ export default function LowerOutput({
             {(candidate.note || candidate.homophone || candidate.device) && (
               <div className="mt-3 space-y-1.5">
                 {candidate.device && (
-                  <p className="rounded border border-cinnabar/25 bg-accentSoft/60 px-2.5 py-1.5 text-[12px] leading-relaxed text-cinnabar">
+                  <p className="rounded border border-cinnabar/25 bg-accentSoft/60 px-2.5 py-1.5 text-[12px] leading-relaxed text-cinnabarInk">
                     机关：{candidate.device}
                   </p>
                 )}

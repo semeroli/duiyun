@@ -15,13 +15,20 @@
   --panel-solid: #fffdf9;
   --ink: #2c2416;
   --ink-soft: #5b4c38;
-  --ink-faint: #8b7a62;
+  --ink-faint: #7f6f5a;              /* 3.89 → 4.54 ✅（正文级说明文字得够 4.5） */
   --cinnabar: #c43d3d;
   --stoneblue: #4a6b8a;
   --gold: #b08a3e;
   --line: rgba(44, 36, 22, 0.13);
   --line-strong: rgba(44, 36, 22, 0.28);
   --accent-soft: rgba(196, 61, 61, 0.09);
+  /* ── 派生色：只用于「当文字」和「当必要边界」两种场合 ──
+     上面那几个原色继续管描边、印章、装饰线，不动 —— 这样改动面最小、气质不变。 */
+  --gold-ink: #8c6d31;               /* 金色当文字用：4.52 ✅ */
+  --cinnabar-ink: #bc3b3b;           /* 朱红文字叠浅红底：4.52 / 4.76 ✅ */
+  --line-input: rgba(44, 36, 22, 0.5);   /* 输入框边框：3.01 ✅ */
+  --ok-ink: #047857;                 /* 成功态文字：5.40 ✅ */
+  --warn-ink: #b45309;               /* 警告态文字：4.94 ✅ */
   --shadow-rgb: 44, 36, 22;
   --fiber: 0.5;
   --vignette: rgba(44, 36, 22, 0.06);
@@ -34,13 +41,18 @@
   --panel-solid: #fffbf5;
   --ink: #2f1a12;
   --ink-soft: #6b3f2c;
-  --ink-faint: #9c7059;
+  --ink-faint: #926853;              /* 4.02 → 4.53 ✅ */
   --cinnabar: #c0271f;
   --stoneblue: #4a6b8a;
   --gold: #a8761f;
   --line: rgba(150, 45, 30, 0.2);
   --line-strong: rgba(150, 45, 30, 0.38);
   --accent-soft: rgba(192, 39, 31, 0.1);
+  --gold-ink: #96691c;               /* 4.53 ✅ */
+  --cinnabar-ink: #c0271f;           /* 原本就 4.72 / 4.91 ✅，不动值 */
+  --line-input: rgba(150, 45, 30, 0.6);   /* 3.06 ✅ */
+  --ok-ink: #047857;                 /* 5.32 ✅ */
+  --warn-ink: #b45309;               /* 4.87 ✅ */
   --shadow-rgb: 120, 45, 25;
   --fiber: 0.35;
   --vignette: rgba(160, 40, 25, 0.07);
@@ -53,13 +65,18 @@
   --panel-solid: #241d17;
   --ink: #eddfc0;
   --ink-soft: #d2be95;
-  --ink-faint: #9c8763;
+  --ink-faint: #9c8763;              /* 5.33 / 4.80 ✅，原本就达标，不动值 */
   --cinnabar: #d2694a;
   --stoneblue: #7e9dbb;
   --gold: #d9b96a;
   --line: rgba(237, 223, 192, 0.16);
   --line-strong: rgba(237, 223, 192, 0.34);
   --accent-soft: rgba(210, 105, 74, 0.14);
+  --gold-ink: #d9b96a;               /* 9.76 ✅，金色在深底上已够亮，沿用 */
+  --cinnabar-ink: #d77a5e;           /* 5.10 / 4.51 ✅（按面板底色解，见报告 §2.5） */
+  --line-input: rgba(237, 223, 192, 0.4);  /* 3.16 ✅ */
+  --ok-ink: #5aa87f;                 /* 5.81 ✅ */
+  --warn-ink: #c99a4a;               /* 6.50 ✅ */
   --shadow-rgb: 0, 0, 0;
   --fiber: 0.3;
   --vignette: rgba(0, 0, 0, 0.35);
@@ -112,6 +129,11 @@
     outline: 2px solid var(--cinnabar);
     outline-offset: 2px;
     border-radius: 4px;
+  }
+
+  /* 夜读主题：朱红在深底上偏暗，焦点环改用金色，自身也满足 3:1（gold 对面板底 9.76 ✅） */
+  [data-theme="night"] *:focus-visible {
+    outline-color: var(--gold);
   }
 
   ::-webkit-scrollbar {

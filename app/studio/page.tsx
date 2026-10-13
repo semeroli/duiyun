@@ -314,7 +314,7 @@ export default function StudioPage() {
             <section className="pt-1 text-center">
               <div className="mb-3 flex items-center justify-center gap-3">
                 <span className="h-[1px] w-10 bg-lineStrong" />
-                <span className="font-song text-[11px] tracking-[.5em] text-inkFaint">对韵</span>
+                <span className="font-song text-[12px] tracking-[.5em] text-inkFaint">对韵</span>
                 <span className="h-[1px] w-10 bg-lineStrong" />
               </div>
               <h1 className="font-song text-[28px] leading-tight tracking-[.1em] text-ink md:text-[42px]">
@@ -376,7 +376,7 @@ export default function StudioPage() {
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
-                  className="rounded-md border border-cinnabar/40 bg-accentSoft px-4 py-3 text-[13px] leading-relaxed text-cinnabar"
+                  className="rounded-md border border-cinnabar/40 bg-accentSoft px-4 py-3 text-[13px] leading-relaxed text-cinnabarInk"
                   role="alert"
                 >
                   {error}
@@ -400,7 +400,7 @@ export default function StudioPage() {
             {/* 多候选切换 */}
             {candidates.length > 1 && (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-song text-[11px] tracking-[.2em] text-inkFaint">
+                <span className="font-song text-[12px] tracking-[.2em] text-inkFaint">
                   候选 {activeIdx + 1}/{candidates.length}
                 </span>
                 {candidates.map((c, i) => (
@@ -414,14 +414,14 @@ export default function StudioPage() {
                     title={c.lower}
                     className={`h-7 min-w-7 rounded-md border px-2 font-song text-[12px] transition-colors ${
                       i === activeIdx
-                        ? "border-cinnabar/50 bg-accentSoft text-cinnabar"
+                        ? "border-cinnabar/50 bg-accentSoft text-cinnabarInk"
                         : "border-line text-inkFaint hover:border-lineStrong hover:text-ink"
                     }`}
                   >
                     {i + 1}
                   </button>
                 ))}
-                <span className="text-[11px] text-inkFaint">换一个只是切换，点「换一换」才是重新生成</span>
+                <span className="text-[12px] text-inkFaint">换一个只是切换，点「换一换」才是重新生成</span>
               </div>
             )}
 
@@ -429,7 +429,7 @@ export default function StudioPage() {
             <section className="space-y-2.5 pt-1">
               <div className="flex items-baseline justify-between">
                 <h2 className="font-song text-[15px] tracking-[.28em] text-ink">多维解析</h2>
-                <span className="text-[11px] text-inkFaint">平仄 / 词性 / 意境 / 典故</span>
+                <span className="text-[12px] text-inkFaint">平仄 / 词性 / 意境 / 典故</span>
               </div>
               <AnalysisPanels analysis={analysis} />
             </section>
@@ -445,12 +445,12 @@ export default function StudioPage() {
                 }}
                 disabled={!activeCandidate}
               >
-                📜 生成卡片分享
+                生成卡片分享
               </Btn>
               <Btn variant="outline" size="lg" onClick={() => setTipsOpen(true)}>
-                📖 对联知识小贴士
+                对联知识小贴士
               </Btn>
-              <div className="ml-auto hidden items-center gap-2 text-[11px] text-inkFaint md:flex">
+              <div className="ml-auto hidden items-center gap-2 text-[12px] text-inkFaint md:flex">
                 <span>收藏 {favorites.length} 副</span>
                 <Seal text="对韵" size={30} animate={false} rotate={-8} />
               </div>
@@ -477,12 +477,12 @@ export default function StudioPage() {
                 </p>
                 <p>
                   本项目支持任何「OpenAI 兼容」的模型接口。在项目根目录新建
-                  <code className="mx-1 rounded bg-accentSoft px-1.5 py-[1px] font-mono text-[11px] text-cinnabar">
+                  <code className="mx-1 rounded bg-accentSoft px-1.5 py-[1px] font-mono text-[12px] text-cinnabarInk">
                     .env.local
                   </code>
                   ，填三行即可（改完要重启服务）：
                 </p>
-                <pre className="overflow-x-auto rounded border border-line bg-panelSolid px-3 py-2 font-mono text-[11px] leading-relaxed text-inkSoft">
+                <pre className="overflow-x-auto rounded border border-line bg-panelSolid px-3 py-2 font-mono text-[12px] leading-relaxed text-inkSoft">
 {`AI_BASE_URL=https://api.deepseek.com/v1
 AI_API_KEY=你的密钥
 AI_MODEL=deepseek-chat`}
@@ -500,7 +500,7 @@ AI_MODEL=deepseek-chat`}
                 <Seal text="对韵" size={42} animate={false} rotate={-9} />
                 <span className="h-[1px] w-8 bg-line" />
               </div>
-              <p className="text-[11px] leading-relaxed text-inkFaint">
+              <p className="text-[12px] leading-relaxed text-inkFaint">
                 对韵 · 智能对联生成器 ｜ 平仄依古韵（含入声字修正），词性依常用对仗词表
               </p>
             </footer>

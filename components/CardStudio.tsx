@@ -318,9 +318,9 @@ export default function CardStudio({
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-song text-sm text-ink">{r.label}</span>
-                        {active && <span className="text-[11px] text-cinnabar">使用中</span>}
+                        {active && <span className="text-[12px] text-cinnabar">使用中</span>}
                       </div>
-                      <div className="mt-0.5 text-[11px] text-inkFaint">{r.hint}</div>
+                      <div className="mt-0.5 text-[12px] text-inkFaint">{r.hint}</div>
                     </button>
                   );
                 })}
@@ -339,12 +339,12 @@ export default function CardStudio({
             </div>
 
             {error && (
-              <p className="rounded-md border border-cinnabar/40 bg-accentSoft px-3 py-2 text-[12px] leading-relaxed text-cinnabar">
+              <p className="rounded-md border border-cinnabar/40 bg-accentSoft px-3 py-2 text-[12px] leading-relaxed text-cinnabarInk">
                 {error}
               </p>
             )}
 
-            <div className="rounded-md border border-line bg-panelSolid/50 px-3 py-2.5 text-[11px] leading-relaxed text-inkFaint">
+            <div className="rounded-md border border-line bg-panelSolid/50 px-3 py-2.5 text-[12px] leading-relaxed text-inkFaint">
               <p className="mb-1 font-song text-[12px] tracking-wider text-inkSoft">小贴士</p>
               导出的卡片会跟随当前主题（素雅 / 春节 / 夜读）变色。春节写春联时，先切到「春节喜庆」再导出。
             </div>

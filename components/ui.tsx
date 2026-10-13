@@ -17,8 +17,8 @@ type BtnSize = "sm" | "md" | "lg";
 
 const BTN_BASE =
   "inline-flex items-center justify-center gap-2 font-song select-none whitespace-nowrap " +
-  "transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-45 " +
-  "focus-visible:outline-none active:translate-y-[1px]";
+  "transition-[transform,background-color,border-color,color] duration-200 disabled:cursor-not-allowed disabled:opacity-45 " +
+  "active:translate-y-[1px]";
 
 const BTN_SIZE: Record<BtnSize, string> = {
   sm: "h-8 px-3 text-[13px] rounded-md tracking-wide",
@@ -80,14 +80,14 @@ export function Badge({
 }) {
   const tones: Record<string, string> = {
     neutral: "text-inkFaint border-line",
-    good: "text-emerald-700 border-emerald-600/40 bg-emerald-500/8 dark:text-emerald-300",
-    warn: "text-amber-700 border-amber-600/40 bg-amber-500/10",
+    good: "text-okInk border-okInk/40 bg-okInk/8",
+    warn: "text-warnInk border-warnInk/40 bg-warnInk/10",
     info: "text-stoneblue border-stoneblue/40 bg-stoneblue/8",
-    red: "text-cinnabar border-cinnabar/40 bg-cinnabar/10",
+    red: "text-cinnabarInk border-cinnabar/40 bg-cinnabar/10",
   };
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-[2px] text-[11px] font-song tracking-wide ${tones[tone]} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-[2px] text-[12px] font-song tracking-wide ${tones[tone]} ${className}`}
     >
       {children}
     </span>

@@ -78,7 +78,7 @@ export default function AnalysisPanels({ analysis }: { analysis: CoupletAnalysis
                   <span className="font-song text-[15px] tracking-[.18em] text-ink">
                     {TITLES[key]}
                   </span>
-                  <span className="hidden text-[11px] text-inkFaint sm:inline">{SUBTITLES[key]}</span>
+                  <span className="hidden text-[12px] text-inkFaint sm:inline">{SUBTITLES[key]}</span>
                 </span>
               </span>
               <Badge tone={grades[key].tone}>{grades[key].text}</Badge>
@@ -127,7 +127,7 @@ function PosTable({ analysis }: { analysis: CoupletAnalysis }) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[420px] border-collapse text-[13px]">
           <thead>
-            <tr className="text-left font-song text-[11px] tracking-[.2em] text-inkFaint">
+            <tr className="text-left font-song text-[12px] tracking-[.2em] text-inkFaint">
               <th className="pb-2 pr-3 font-normal">上联</th>
               <th className="pb-2 pr-3 font-normal">词性</th>
               <th className="pb-2 pr-3 font-normal">下联</th>
@@ -152,7 +152,7 @@ function PosTable({ analysis }: { analysis: CoupletAnalysis }) {
                   {p.upperPos === "未知" || p.lowerPos === "未知" ? (
                     <span className="text-inkFaint">待定</span>
                   ) : p.ok ? (
-                    <span className="text-emerald-600">✓ 相同</span>
+                    <span className="text-okInk">✓ 相同</span>
                   ) : (
                     <span className="text-cinnabar">✗ 不同</span>
                   )}
@@ -186,14 +186,14 @@ function Conception({ analysis }: { analysis: CoupletAnalysis }) {
 function ImageBox({ label, items, accent }: { label: string; items: string[]; accent?: boolean }) {
   return (
     <div className={`rounded-md border px-3 py-2.5 ${accent ? "border-cinnabar/35 bg-accentSoft" : "border-line"}`}>
-      <div className="mb-1.5 font-song text-[11px] tracking-[.18em] text-inkFaint">{label}</div>
+      <div className="mb-1.5 font-song text-[12px] tracking-[.18em] text-inkFaint">{label}</div>
       {items.length ? (
         <div className="flex flex-wrap gap-1.5">
           {items.map((w) => (
             <span
               key={w}
               className={`rounded px-1.5 py-[2px] font-song text-[13px] ${
-                accent ? "bg-cinnabar/12 text-cinnabar" : "bg-accentSoft text-inkSoft"
+                accent ? "bg-cinnabar/12 text-cinnabarInk" : "bg-accentSoft text-inkSoft"
               }`}
             >
               {w}

@@ -26,6 +26,12 @@ const config: Config = {
         line: "var(--line)",
         lineStrong: "var(--line-strong)",
         accentSoft: "var(--accent-soft)",
+        // 派生色：专用于「当文字 / 当必要边界」（报告 §2.5）
+        goldInk: "var(--gold-ink)",
+        cinnabarInk: "var(--cinnabar-ink)",
+        lineInput: "var(--line-input)",
+        okInk: "var(--ok-ink)",
+        warnInk: "var(--warn-ink)",
       },
       fontFamily: {
         song: [

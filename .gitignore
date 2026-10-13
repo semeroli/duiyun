@@ -31,3 +31,23 @@ _shots_tmp/
 # 界面设计走查（_audit/）：脚本入库，Chrome 临时 profile 与截图不入库
 _audit/_profile*/
 _audit/*.png
+
+# 工作区根目录偶发的 Windows 保留名垃圾文件（nul 无法被 git 索引，需忽略）
+nul
+
+# 一次性诊断/清理临时文件（排查 nul 索引错误时用，不入库）
+_gitstatus.txt
+_nulcheck.txt
+_readout.txt
+_diag.mjs
+_diagout.txt
+_delnul.mjs
+_delnul.txt
+_delps.txt
+_delvol.txt
+_delvol2.txt
+_fileinfo.txt
+_guid.txt
+_wslcheck.txt
+_wslrm.txt
+_mvdel.txt

@@ -65,7 +65,7 @@ export default async function BlogPost({ params }: Params) {
             <div className="pointer-events-none absolute inset-0 bamboo-veil opacity-[.2]" />
             <div className="relative">
               <header className="mb-7">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-song text-[11px] tracking-[.2em] text-inkFaint">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-song text-[12px] tracking-[.2em] text-inkFaint">
                   <span>{formatDate(post.publishedAt)}</span>
                   {post.authorName && <span>· {post.authorName}</span>}
                   {post.viewCount > 0 && <span>· 读过 {post.viewCount} 次</span>}
@@ -78,7 +78,7 @@ export default async function BlogPost({ params }: Params) {
                     {post.tags.map((t) => (
                       <span
                         key={t}
-                        className="rounded-full border border-line px-2 py-[2px] font-song text-[11px] text-inkFaint"
+                        className="rounded-full border border-line px-2 py-[2px] font-song text-[12px] text-inkFaint"
                       >
                         {t}
                       </span>

@@ -42,6 +42,7 @@ export default function NavBar({
   onSoundChange: (v: boolean) => void;
 }) {
   const [settingOpen, setSettingOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-[var(--panel)] backdrop-blur-md">
@@ -65,12 +66,12 @@ export default function NavBar({
           </svg>
           <div className="leading-none">
             <div className="font-song text-lg tracking-[.25em] text-ink">对韵</div>
-            <div className="mt-[3px] text-[10px] tracking-[.2em] text-inkFaint">智能对联生成器</div>
+            <div className="mt-[3px] text-[12px] tracking-[.2em] text-inkFaint">智能对联生成器</div>
           </div>
         </Link>
 
         {/* 类型切换 */}
-        <nav className="order-last flex w-full items-center gap-1 rounded-lg border border-line bg-panelSolid/50 p-1 md:order-none md:ml-4 md:w-auto">
+        <nav className="order-last flex w-full items-center gap-1 rounded-md border border-line bg-panelSolid/50 p-1 md:order-none md:ml-4 md:w-auto">
           {KINDS.map((k) => {
             const active = kind === k;
             return (
@@ -87,7 +88,7 @@ export default function NavBar({
                     transition={{ type: "spring", stiffness: 430, damping: 33 }}
                   />
                 )}
-                <span className={active ? "relative text-cinnabar" : "relative text-inkSoft hover:text-ink"}>
+                <span className={active ? "relative text-cinnabarInk" : "relative text-inkSoft hover:text-ink"}>
                   {KIND_META[k].label}
                 </span>
               </button>
@@ -100,18 +101,19 @@ export default function NavBar({
           <Link
             href="/blog"
             title="对韵博客：格律、典故与课堂用法"
-            className="rounded-md border border-cinnabar/40 bg-accentSoft px-2.5 py-2 font-song text-[13px] text-cinnabar transition-colors hover:border-cinnabar/70"
+            className="rounded-md border border-cinnabar/40 bg-accentSoft px-2.5 py-2 font-song text-[13px] text-cinnabarInk transition-colors hover:border-cinnabar/70"
           >
             对韵博客
           </Link>
 
+          <div className="hidden items-center gap-1 md:flex">
           <button
             type="button"
             onClick={() => onSoundChange(!sound)}
             title={sound ? "关闭轻触音" : "开启轻触音（棋子落盘）"}
             aria-pressed={sound}
             className={`rounded-md px-2.5 py-2 text-[13px] font-song transition-colors ${
-              sound ? "bg-accentSoft text-cinnabar" : "text-inkFaint hover:bg-accentSoft hover:text-ink"
+              sound ? "bg-accentSoft text-cinnabarInk" : "text-inkFaint hover:bg-accentSoft hover:text-ink"
             }`}
           >
             {sound ? "音效开" : "音效关"}
@@ -123,7 +125,7 @@ export default function NavBar({
             title="学习模式：侧栏显示平仄规则与词性对照表"
             aria-pressed={learning}
             className={`rounded-md px-2.5 py-2 text-[13px] font-song transition-colors ${
-              learning ? "bg-accentSoft text-cinnabar" : "text-inkFaint hover:bg-accentSoft hover:text-ink"
+              learning ? "bg-accentSoft text-cinnabarInk" : "text-inkFaint hover:bg-accentSoft hover:text-ink"
             }`}
           >
             学习模式
@@ -137,7 +139,7 @@ export default function NavBar({
           >
             收藏
             {favCount > 0 && (
-              <span className="ml-1 inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-cinnabar px-1 text-[10px] font-semibold text-white">
+              <span className="ml-1 inline-flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-cinnabar px-1 text-[12px] font-semibold text-white">
                 {favCount}
               </span>
             )}
@@ -150,7 +152,7 @@ export default function NavBar({
               title="外观与主题"
               aria-expanded={settingOpen}
               className={`rounded-md px-2.5 py-2 text-[13px] font-song transition-colors ${
-                settingOpen ? "bg-accentSoft text-cinnabar" : "text-inkFaint hover:bg-accentSoft hover:text-ink"
+                settingOpen ? "bg-accentSoft text-cinnabarInk" : "text-inkFaint hover:bg-accentSoft hover:text-ink"
               }`}
             >
               主题
@@ -187,9 +189,9 @@ export default function NavBar({
                           >
                             <div className="flex items-center justify-between">
                               <span className="font-song text-sm text-ink">{t.label}</span>
-                              {active && <span className="text-[11px] text-cinnabar">使用中</span>}
+                              {active && <span className="text-[12px] text-cinnabarInk">使用中</span>}
                             </div>
-                            <div className="mt-0.5 text-[11px] text-inkFaint">{t.hint}</div>
+                            <div className="mt-0.5 text-[12px] text-inkFaint">{t.hint}</div>
                           </button>
                         );
                       })}
@@ -204,9 +206,98 @@ export default function NavBar({
                           className="h-4 w-4 accent-[var(--cinnabar)]"
                         />
                       </label>
-                      <p className="mt-1 text-[11px] leading-relaxed text-inkFaint">
+                      <p className="mt-1 text-[12px] leading-relaxed text-inkFaint">
                         现场合成的「棋子落盘」声，默认关闭。
                       </p>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+          </div>
+
+          {/* 手机端：音效/学习/收藏/主题 收进「更多」，避免一行放不下换行成多行 */}
+          <div className="relative md:hidden">
+            <button
+              type="button"
+              onClick={() => setMoreOpen((v) => !v)}
+              aria-expanded={moreOpen}
+              title="更多工具与外观"
+              className={`rounded-md px-2.5 py-2 font-song text-[13px] transition-colors ${
+                moreOpen ? "bg-accentSoft text-cinnabarInk" : "text-inkFaint hover:bg-accentSoft hover:text-ink"
+              }`}
+            >
+              更多
+            </button>
+            <AnimatePresence>
+              {moreOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMoreOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                    transition={{ duration: 0.16 }}
+                    className="absolute right-0 top-[calc(100%+8px)] z-20 w-52 paper-panel p-2 shadow-lift space-y-1"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onSoundChange(!sound)}
+                      aria-pressed={sound}
+                      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-colors ${
+                        sound ? "bg-accentSoft text-cinnabarInk" : "text-inkSoft hover:bg-accentSoft/60"
+                      }`}
+                    >
+                      <span className="font-song text-[13px]">轻触音效</span>
+                      <span className="text-[12px] text-inkFaint">{sound ? "开" : "关"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onToggleLearning}
+                      aria-pressed={learning}
+                      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-colors ${
+                        learning ? "bg-accentSoft text-cinnabarInk" : "text-inkSoft hover:bg-accentSoft/60"
+                      }`}
+                    >
+                      <span className="font-song text-[13px]">学习模式</span>
+                      <span className="text-[12px] text-inkFaint">{learning ? "开" : "关"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onOpenFavorites}
+                      className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-inkSoft transition-colors hover:bg-accentSoft/60"
+                    >
+                      <span className="font-song text-[13px]">收藏</span>
+                      {favCount > 0 && (
+                        <span className="inline-flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-cinnabar px-1 text-[12px] font-semibold text-white">
+                          {favCount}
+                        </span>
+                      )}
+                    </button>
+                    <div className="border-t border-line pt-1.5">
+                      <div className="px-3 py-1 font-song text-xs tracking-[.2em] text-inkFaint">外观主题</div>
+                      {THEMES.map((t) => {
+                        const active = theme === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => onThemeChange(t.id)}
+                            className={`w-full rounded-md border px-3 py-2 text-left transition-colors ${
+                              active
+                                ? "border-cinnabar/50 bg-accentSoft"
+                                : "border-line hover:border-lineStrong hover:bg-accentSoft/60"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-song text-sm text-ink">{t.label}</span>
+                              {active && <span className="text-[12px] text-cinnabarInk">使用中</span>}
+                            </div>
+                            <div className="mt-0.5 text-[12px] text-inkFaint">{t.hint}</div>
+                          </button>
+                        );
+                      })}
                     </div>
                   </motion.div>
                 </>
@@ -220,7 +311,7 @@ export default function NavBar({
 
       {/* 当前类型的说明，一行小字 */}
       <div className="mx-auto max-w-6xl px-4 pb-2 md:px-6">
-        <p className="text-[11px] leading-relaxed text-inkFaint">{KIND_META[kind].hint}</p>
+        <p className="text-[12px] leading-relaxed text-inkFaint">{KIND_META[kind].hint}</p>
       </div>
     </header>
   );

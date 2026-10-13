@@ -40,13 +40,13 @@ export default function TipsDrawer({ open, onClose }: { open: boolean; onClose: 
               onClick={() => setCat(c)}
               className={`rounded-full border px-3 py-1 font-song text-[12px] tracking-wide transition-colors ${
                 active
-                  ? "border-cinnabar/50 bg-accentSoft text-cinnabar"
+                  ? "border-cinnabar/50 bg-accentSoft text-cinnabarInk"
                   : "border-line text-inkSoft hover:border-lineStrong hover:bg-accentSoft/60"
               }`}
             >
               {c}
               {c !== "全部" && (
-                <span className="ml-1 text-[10px] text-inkFaint">
+                <span className="ml-1 text-[12px] text-inkFaint">
                   {TIPS.filter((t) => t.category === c).length}
                 </span>
               )}
@@ -66,7 +66,7 @@ export default function TipsDrawer({ open, onClose }: { open: boolean; onClose: 
                 aria-expanded={isOpen}
                 className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left transition-colors hover:bg-accentSoft/50"
               >
-                <span className="shrink-0 rounded border border-line px-1.5 py-[1px] font-song text-[10px] text-inkFaint">
+                <span className="shrink-0 rounded border border-line px-1.5 py-[1px] font-song text-[12px] text-inkFaint">
                   {t.category}
                 </span>
                 <span className="min-w-0 flex-1 font-song text-[14px] leading-snug text-ink">

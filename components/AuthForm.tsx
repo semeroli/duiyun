@@ -112,7 +112,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
               <button
                 type="button"
                 onClick={() => setShowPw((v) => !v)}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] text-inkFaint transition-colors hover:bg-accentSoft hover:text-ink"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[12px] text-inkFaint transition-colors hover:bg-accentSoft hover:text-ink"
               >
                 {showPw ? "隐藏" : "显示"}
               </button>
@@ -122,7 +122,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
           {error && (
             <p
               role="alert"
-              className="rounded-md border border-cinnabar/40 bg-accentSoft px-3 py-2 text-[12px] leading-relaxed text-cinnabar"
+              className="rounded-md border border-cinnabar/40 bg-accentSoft px-3 py-2 text-[12px] leading-relaxed text-cinnabarInk"
             >
               {error}
             </p>
@@ -139,7 +139,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
 
         <div className="mt-5 flex items-center gap-3">
           <span className="h-[1px] flex-1 bg-line" />
-          <span className="text-[11px] text-inkFaint">
+          <span className="text-[12px] text-inkFaint">
             {isLogin ? "还没有账号？" : "已经有账号了？"}
           </span>
           <span className="h-[1px] flex-1 bg-line" />
@@ -165,7 +165,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
 }
 
 const INPUT =
-  "h-11 w-full rounded-md border border-line bg-panelSolid px-3 font-kai text-[14px] text-ink outline-none transition-colors placeholder:text-inkFaint/70 focus:border-cinnabar/60";
+  "h-11 w-full rounded-md border border-lineInput bg-panelSolid px-3 font-kai text-[14px] text-ink transition-colors placeholder:text-inkFaint/70 focus:border-cinnabar/60";
 
 function Field({
   label,
@@ -180,7 +180,7 @@ function Field({
     <label className="block">
       <span className="mb-1.5 flex items-baseline justify-between">
         <span className="font-song text-[13px] tracking-wider text-inkSoft">{label}</span>
-        {hint && <span className="text-[11px] text-inkFaint">{hint}</span>}
+        {hint && <span className="text-[12px] text-inkFaint">{hint}</span>}
       </span>
       {children}
     </label>
