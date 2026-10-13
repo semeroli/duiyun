@@ -42,7 +42,7 @@ export function getAiConfig(): AiConfig {
     baseUrl: (env("AI_BASE_URL") || DEFAULT_BASE_URL).replace(/\/+$/, ""),
     apiKey: env("AI_API_KEY"),
     model: env("AI_MODEL") || DEFAULT_MODEL,
-    timeoutMs: Math.max(5000, Number(env("AI_TIMEOUT_MS")) || 45000),
+    timeoutMs: Math.max(5000, Number(env("AI_TIMEOUT_MS")) || 60000),
   };
 }
 
@@ -192,7 +192,10 @@ async function postChat(
         { role: "user", content: userPrompt(upper, kind, count) },
       ],
       temperature: 0.95,
-      max_tokens: 1600,
+      // 🔴 免费/推理类模型会把输出额度先花在「思考」上。1600 太小：
+      // 实测魔搭 deepseek-ai/DeepSeek-V4.1-Flash 跑满 1600 后正文一个字没吐
+      // （耗时 20 秒左右、content 为空）—— 留足额度才有正文。
+      max_tokens: 3200,
     };
     if (withJsonMode) body.response_format = { type: "json_object" };
 
@@ -224,6 +227,35 @@ function pickContent(payload: unknown): string {
       .join("");
   }
   return "";
+}
+
+/** 部分平台（如魔搭上的推理模型）把思考过程单独放在 message.reasoning_content */
+function pickReasoning(payload: unknown): string {
+  const choices = (payload as { choices?: unknown })?.choices;
+  if (!Array.isArray(choices) || !choices.length) return "";
+  const msg = (choices[0] as { message?: Record<string, unknown> })?.message;
+  const rc = msg?.reasoning_content;
+  return typeof rc === "string" ? rc : "";
+}
+
+/**
+ * 失败时给一句「能拿去排查」的中文说明。
+ * 只报长度与开头，不打印 Key；把 finish_reason / 思考字段长度都带上，
+ * 是为了区分「额度被思考吃光」和「平台返回错误信封」这两种完全不同的病。
+ */
+function describeFailure(content: string, reasoning: string, data: unknown, rawText: string): string {
+  const o = data as Record<string, unknown> | null;
+  if (o && typeof o === "object" && !("choices" in o) && ("message" in o || "code" in o)) {
+    const code = String((o as { code?: unknown }).code ?? "-");
+    const msg = String((o as { message?: unknown }).message ?? "").slice(0, 150);
+    return `AI 平台返回错误信封：code=${code} message=${msg}`;
+  }
+  const ch0 = (o as { choices?: unknown[] })?.choices?.[0] as Record<string, unknown> | undefined;
+  const finish = ch0 ? String(ch0.finish_reason ?? "未提供") : "响应里没有 choices";
+  return (
+    `AI 没有产出可解析的正文（finish_reason=${finish}，正文长度=${content.length}，` +
+    `思考字段长度=${reasoning.length}；原文开头：${rawText.replace(/\s+/g, " ").slice(0, 150)}）`
+  );
 }
 
 /** 调用模型生成候选；失败时抛出的 Error.message 是可直接展示的中文 */
@@ -269,14 +301,23 @@ export async function generateWithAi(
   }
 
   const content = pickContent(data);
-  if (!content.trim()) throw new Error("AI 返回了空内容");
+  const reasoning = pickReasoning(data);
 
-  let parsed: unknown;
-  try {
-    parsed = extractJson(content);
-  } catch {
-    throw new Error(`AI 返回的内容无法解析为 JSON（开头：${content.slice(0, 80)}）`);
+  // 正文与思考字段都试一遍：魔搭上的推理模型有时把整段 JSON 落在
+  // reasoning_content 里、正文留空。这是**纯增量**逻辑 —— 正文正常时
+  // 第一轮就命中，行为与以前完全一致。
+  let parsed: unknown = null;
+  for (const cand of [content, reasoning]) {
+    if (!cand.trim()) continue;
+    try {
+      parsed = extractJson(cand);
+      break;
+    } catch {
+      // 这一个不行，试下一个
+    }
   }
+
+  if (parsed === null) throw new Error(describeFailure(content, reasoning, data, text));
 
   const candidates = normalizeCandidates(parsed, onlyHanzi(upper).length);
   if (!candidates.length) {

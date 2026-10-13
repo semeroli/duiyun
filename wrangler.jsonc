@@ -32,8 +32,9 @@
     // 任意「OpenAI 兼容」的 Chat Completions 端点，写到 /v1 为止
     "AI_BASE_URL": "https://api-inference.modelscope.cn/v1",
     "AI_MODEL": "deepseek-ai/DeepSeek-V4.1-Flash",
-    // 单次请求超时（毫秒）。上游排队严重时可调大
-    "AI_TIMEOUT_MS": "45000"
+    // 单次请求超时（毫秒）。推理类模型会先想很久，留足余量；
+    // 实测 Cloudflare 上 60 秒级的非流式请求可以正常存活
+    "AI_TIMEOUT_MS": "60000"
   },
 
   "assets": {
