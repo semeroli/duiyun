@@ -4,6 +4,15 @@
  * 只要对方提供「OpenAI 兼容」的 /chat/completions 即可，因此
  * DeepSeek / 通义千问 / 智谱 / 魔搭 / OpenAI 都能直接接。
  *
+ * 配置来源与优先级（从高到低）：
+ *   1. 运行期环境变量 —— Cloudflare 上由 `wrangler.jsonc` 的 `vars` 段下发
+ *      （非密钥配置）以及控制台里的 Secret（密钥）注入；
+ *   2. 下面的兜底默认值 —— 只在前两者都拿不到时才生效。
+ *
+ * 🔴 非密钥配置（AI_BASE_URL / AI_MODEL）请改 `wrangler.jsonc` 的 `vars`，
+ *    不要只写在 Cloudflare 控制台：`wrangler deploy` 每次部署都会清空
+ *    Worker 上的明文变量（详见 wrangler.jsonc 内的说明）。
+ *
  * 设计取舍：
  *   - 平仄不交给模型算（模型很容易算错），只让它产出文字与解析；
  *   - 要求返回严格 JSON，并用「剥代码块 → 取首尾花括号」两步容错解析；
@@ -12,6 +21,10 @@
 
 import { onlyHanzi } from "./tone";
 import { KIND_META, type AllusionAnalysis, type CoupletKind } from "./types";
+
+/** 与 wrangler.jsonc 的 vars 保持一致：换服务商时两处一起改 */
+const DEFAULT_BASE_URL = "https://api-inference.modelscope.cn/v1";
+const DEFAULT_MODEL = "deepseek-ai/DeepSeek-V4.1-Flash";
 
 export interface AiConfig {
   baseUrl: string;
@@ -26,9 +39,9 @@ function env(name: string): string {
 
 export function getAiConfig(): AiConfig {
   return {
-    baseUrl: (env("AI_BASE_URL") || "https://api.deepseek.com/v1").replace(/\/+$/, ""),
+    baseUrl: (env("AI_BASE_URL") || DEFAULT_BASE_URL).replace(/\/+$/, ""),
     apiKey: env("AI_API_KEY"),
-    model: env("AI_MODEL") || "deepseek-chat",
+    model: env("AI_MODEL") || DEFAULT_MODEL,
     timeoutMs: Math.max(5000, Number(env("AI_TIMEOUT_MS")) || 45000),
   };
 }

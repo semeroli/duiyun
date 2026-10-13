@@ -24,20 +24,23 @@ npm run dev          # 打开 http://localhost:4311
 复制 `.env.example` 为 `.env.local`，填三行，然后**重启服务**：
 
 ```ini
-AI_BASE_URL=https://api.deepseek.com/v1
+AI_BASE_URL=https://api-inference.modelscope.cn/v1
 AI_API_KEY=你的密钥
-AI_MODEL=deepseek-chat
+AI_MODEL=deepseek-ai/DeepSeek-V4.1-Flash
 ```
 
 任何「OpenAI 兼容」的 `/chat/completions` 都能接，例如：
 
 | 平台 | AI_BASE_URL | AI_MODEL 示例 |
 |---|---|---|
+| 魔搭 ModelScope | `https://api-inference.modelscope.cn/v1` | `deepseek-ai/DeepSeek-V4.1-Flash` |
 | DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` |
 | 通义千问 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` |
 | 智谱 GLM | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` |
-| 魔搭 ModelScope | `https://api-inference.modelscope.cn/v1` | 清单里的任意对话模型 |
 | OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` |
+
+> `.env.local` **只影响本机**（它被 `.gitignore` 忽略，Cloudflare 构建时拿不到），
+> 线上配置见「六、部署」。
 
 > **AI 挂了也不影响使用**：接口失败会自动降级到内置语料，并在界面上写明原因。
 > 上课演示时不会白屏。
@@ -186,16 +189,35 @@ npx wrangler login    # 首次部署前登录 Cloudflare 账号
 npm run deploy        # 构建并发布
 ```
 
-配置 AI 密钥（**不要把 Key 写进代码或仓库**）：
+### 线上配置：**非密钥写配置，密钥放 Secret**
+
+| 变量 | 放哪儿 | 说明 |
+|---|---|---|
+| `AI_BASE_URL` | `wrangler.jsonc` 的 `vars` | 非敏感，跟随仓库版本管理 |
+| `AI_MODEL` | `wrangler.jsonc` 的 `vars` | 同上 |
+| `AI_TIMEOUT_MS` | `wrangler.jsonc` 的 `vars` | 同上 |
+| `AI_API_KEY` | Cloudflare 控制台 → Variables and Secrets，**类型选 Secret** | 🔴 绝不能进仓库 |
+
+换服务商时只改 `wrangler.jsonc` 里那两行，提交即自动部署，业务代码不用动。
+
+> 🔴 **为什么不能只写在控制台（2026-10-13 实测踩过）**
+>
+> `wrangler deploy` 的 `--keep-vars` 默认为 `false`：每次部署会**先删光 Worker 上
+> 所有「明文变量」**，再写入配置文件里的 `vars`。而 `npm run deploy`
+> （`opennextjs-cloudflare deploy`）内部就是 `wrangler deploy`，且不会传
+> `--keep-vars`。所以只写在控制台的明文变量，**每推一次代码就消失一次**；
+> 而 **Secret 类型永远不会被部署删除**。
+>
+> 这就是「明明设了 Key、网页却仍显示未配置」的典型原因。排查用
+> `GET /api/generate`：`configured` 应为 `true`、`keyFingerprint` 不应是 `none`。
+
+也可以在控制台里手动加（仅限 Secret 类型）：
 
 ```bash
 npx wrangler secret put AI_API_KEY    # 魔搭访问令牌
-npx wrangler secret put AI_BASE_URL   # https://api-inference.modelscope.cn/v1
-npx wrangler secret put AI_MODEL      # 例如 Qwen/Qwen3-235B-A22B-Instruct-2507
 ```
 
-> 非密钥类的值（如 `AI_BASE_URL`、`AI_MODEL`）也可以写在 `wrangler.jsonc` 的
-> `vars` 里；密钥一律用 `secret put`。**改完变量必须重新部署才生效。**
+**改完变量必须重新部署才生效。**
 
 也可以把 GitHub 仓库连到 Cloudflare 做自动部署：每次推到主分支就自动构建发布。
 

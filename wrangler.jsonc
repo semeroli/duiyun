@@ -11,6 +11,31 @@
   // nodejs_compat                     Next.js 内部用到部分 Node API，必须开
   // global_fetch_strictly_public      允许应用向外发起 fetch（调魔搭 API 必需）
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+
+  // ─────────────────────────────────────────────────────────────────
+  //  非密钥配置：写在这里，随每次部署自动下发，永远不会丢
+  // ─────────────────────────────────────────────────────────────────
+  //  ⚠️ 只有「不敏感」的值能放这里 —— 这个文件会进 GitHub 仓库，
+  //     任何人看到都无所谓。AI_API_KEY 必须留在 Cloudflare 控制台，
+  //     且类型要选 Secret。
+  //
+  //  🔴 为什么必须写进配置、不能只放控制台（2026-10-13 实测踩过）：
+  //     `wrangler deploy` 的 --keep-vars 默认为 false —— 每次部署
+  //     **先删光 Worker 上所有「明文变量」**，再写入下面这段 vars；
+  //     而 opennextjs-cloudflare deploy 内部就是 wrangler deploy，
+  //     且不会传 --keep-vars。所以只写在控制台的明文变量，
+  //     每推一次代码就消失一次（Secrets 不受影响，永不被删）。
+  //
+  //  🔧 换服务商：只改下面这两行 → 提交 → 自动部署。
+  //     业务代码（lib/ai.ts）不用动；控制台也不用动。
+  "vars": {
+    // 任意「OpenAI 兼容」的 Chat Completions 端点，写到 /v1 为止
+    "AI_BASE_URL": "https://api-inference.modelscope.cn/v1",
+    "AI_MODEL": "deepseek-ai/DeepSeek-V4.1-Flash",
+    // 单次请求超时（毫秒）。上游排队严重时可调大
+    "AI_TIMEOUT_MS": "45000"
+  },
+
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
