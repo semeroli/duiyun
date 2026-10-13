@@ -27,3 +27,7 @@ _icons/_sheet_info.txt
 
 # 界面自检截图（_shots.mjs 生成的，看一眼就删，不入库）
 _shots_tmp/
+
+# 界面设计走查（_audit/）：脚本入库，Chrome 临时 profile 与截图不入库
+_audit/_profile*/
+_audit/*.png
