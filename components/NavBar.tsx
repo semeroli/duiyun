@@ -66,7 +66,7 @@ export default function NavBar({
           </svg>
           <div className="leading-none">
             <div className="font-song text-lg tracking-[.25em] text-ink">对韵</div>
-            <div className="mt-[3px] text-[12px] tracking-[.2em] text-inkFaint">智能对联生成器</div>
+            <div className="mt-[3px] hidden text-[12px] tracking-[.2em] text-inkFaint sm:block">智能对联生成器</div>
           </div>
         </Link>
 

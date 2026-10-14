@@ -35,6 +35,8 @@ const send = (method, params = {}) => { const i = ++id; return new Promise((res,
 const evalJs = async (e) => (await send("Runtime.evaluate", { expression: e, returnByValue: true, awaitPromise: true })).result.value;
 
 await send("Page.enable"); await send("Runtime.enable");
+await send("Network.enable");
+await send("Network.setCacheDisabled", { cacheDisabled: true });
 await send("Emulation.setDeviceMetricsOverride", { width: W, height: H, deviceScaleFactor: 1, mobile: W < 768 });
 await send("Page.navigate", { url: URL_ }); await sleep(6000);
 

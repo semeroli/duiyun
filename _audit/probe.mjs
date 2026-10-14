@@ -48,6 +48,8 @@ function send(method, params = {}) {
 
 await send("Page.enable");
 await send("Runtime.enable");
+await send("Network.enable");
+await send("Network.setCacheDisabled", { cacheDisabled: true });
 await send("Emulation.setDeviceMetricsOverride", { width: W, height: H, deviceScaleFactor: 1, mobile: W < 768 });
 await send("Page.navigate", { url: URL_ });
 await sleep(6000);

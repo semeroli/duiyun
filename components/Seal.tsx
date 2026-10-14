@@ -38,7 +38,7 @@ export default function Seal({
             <span
               key={`${c}-${i}`}
               className="block leading-none"
-              style={{ fontSize: chars.length > 4 ? size * 0.24 : size * 0.34, fontWeight: 700 }}
+              style={{ fontSize: Math.max(chars.length > 4 ? size * 0.24 : size * 0.34, 12), fontWeight: 700 }}
             >
               {c}
             </span>
