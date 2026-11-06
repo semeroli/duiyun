@@ -169,6 +169,18 @@ export interface GenerateResponse {
   candidates: CoupletCandidate[];
   /** 服务端毫秒耗时，便于诊断 */
   elapsedMs?: number;
+  /** 实际出下联的 AI 服务商 id（engine=ai 时） */
+  provider?: string;
+  /** 实际使用的模型名（engine=ai 时） */
+  model?: string;
+}
+
+/** 自检接口返回的服务商清单项（界面据此渲染「AI 模型」下拉框） */
+export interface ProviderInfo {
+  id: string;
+  label: string;
+  model: string;
+  configured: boolean;
 }
 
 /* ── 静态数据契约（lib/data/*） ─────────────────────────────── */

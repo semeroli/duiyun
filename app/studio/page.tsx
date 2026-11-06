@@ -45,7 +45,12 @@ import {
   type FavoriteItem,
   type Settings,
 } from "@/lib/storage";
-import type { CoupletCandidate, CoupletKind, GenerateResponse } from "@/lib/types";
+import type {
+  CoupletCandidate,
+  CoupletKind,
+  GenerateResponse,
+  ProviderInfo,
+} from "@/lib/types";
 
 interface EngineInfo {
   engine: "ai" | "local";
@@ -62,7 +67,14 @@ export default function StudioPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [engine, setEngine] = useState<EngineInfo | null>(null);
-  const [config, setConfig] = useState<{ configured: boolean; model: string | null } | null>(null);
+  const [config, setConfig] = useState<{
+    configured: boolean;
+    model: string | null;
+    providers: ProviderInfo[];
+    defaultProvider: string;
+  } | null>(null);
+  /** 当前选中的 AI 服务商（持久化在浏览器，下次回来还是它） */
+  const [activeProvider, setActiveProvider] = useState<string>("modelscope");
 
   const [settings, setSettings] = useState<Settings | null>(null);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
@@ -74,6 +86,9 @@ export default function StudioPage() {
 
   const seedRef = useRef(0);
   const S = settings ?? DEFAULT_SETTINGS;
+
+  /** 当前选中服务商的信息（界面徽标与下拉框都靠它） */
+  const activeProviderInfo = config?.providers.find((p) => p.id === activeProvider);
 
   /* ── 初始化：读本地设置与收藏 ─────────────────────────── */
   useEffect(() => {
@@ -98,7 +113,23 @@ export default function StudioPage() {
         if (!ct.includes("application/json")) throw new Error("no api");
         const json = await res.json();
         if (alive) {
-          setConfig({ configured: !!json.configured, model: json.model ?? null });
+          const providers: ProviderInfo[] = Array.isArray(json.providers) ? json.providers : [];
+          const defaultProvider: string = json.defaultProvider ?? "modelscope";
+          const usable = providers.filter((p) => p.configured).map((p) => p.id);
+          // 上次选过的、且现在还可用就用它；否则回落到服务端默认
+          let saved: string | null = null;
+          try {
+            saved = localStorage.getItem("duiyun.provider");
+          } catch {
+            saved = null;
+          }
+          setActiveProvider(saved && usable.includes(saved) ? saved : defaultProvider);
+          setConfig({
+            configured: !!json.configured,
+            model: json.model ?? null,
+            providers,
+            defaultProvider,
+          });
           setEngine({
             engine: json.configured ? "ai" : "local",
             configured: !!json.configured,
@@ -107,7 +138,7 @@ export default function StudioPage() {
         }
       } catch {
         if (alive) {
-          setConfig({ configured: false, model: null });
+          setConfig({ configured: false, model: null, providers: [], defaultProvider: "modelscope" });
           setEngine({
             engine: "local",
             configured: false,
@@ -139,7 +170,13 @@ export default function StudioPage() {
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ upper: u, kind, count: 3, seed: seedRef.current }),
+          body: JSON.stringify({
+            upper: u,
+            kind,
+            count: 3,
+            seed: seedRef.current,
+            provider: activeProvider,
+          }),
           cache: "no-store",
         });
         const ct = res.headers.get("content-type") ?? "";
@@ -154,7 +191,7 @@ export default function StudioPage() {
         setEngine({
           engine: data.engine,
           configured: data.engine === "ai",
-          model: config?.model ?? null,
+          model: data.model ?? null,
           fallbackReason: data.fallbackReason,
         });
         playSound("drop", S.sound);
@@ -184,7 +221,7 @@ export default function StudioPage() {
         setLoading(false);
       }
     },
-    [upper, kind, config?.model, S.sound]
+    [upper, kind, activeProvider, config?.model, S.sound]
   );
 
   const activeCandidate = candidates[activeIdx] ?? null;
@@ -333,7 +370,14 @@ export default function StudioPage() {
                 {config === null ? (
                   <Badge tone="neutral">正在检测引擎…</Badge>
                 ) : config.configured ? (
-                  <Badge tone="good">AI 已接通{config.model ? ` · ${config.model}` : ""}</Badge>
+                  <Badge tone="good">
+                    AI 已接通
+                    {activeProviderInfo
+                      ? ` · ${activeProviderInfo.label}`
+                      : config.model
+                        ? ` · ${config.model}`
+                        : ""}
+                  </Badge>
                 ) : (
                   <Badge tone="info">未配置 AI Key · 内置语料 + 集句</Badge>
                 )}
@@ -341,6 +385,35 @@ export default function StudioPage() {
                   <Badge tone="warn">{engine.fallbackReason}</Badge>
                 )}
               </div>
+
+              {/* ── AI 模型切换（只有至少一家配了 Key 才出现） ── */}
+              {config && config.providers.filter((p) => p.configured).length > 0 && (
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  <span className="font-song text-[12px] tracking-[.2em] text-inkFaint">AI 模型</span>
+                  <select
+                    aria-label="选择 AI 模型服务商"
+                    value={activeProvider}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setActiveProvider(v);
+                      try {
+                        localStorage.setItem("duiyun.provider", v);
+                      } catch {
+                        /* 隐私模式下 localStorage 可能不可写，忽略即可 */
+                      }
+                    }}
+                    className="max-w-[300px] truncate rounded-md border border-line bg-panelSolid px-2.5 py-1.5 font-song text-[12px] text-inkSoft outline-none transition-colors hover:border-lineStrong focus-visible:border-cinnabar/50"
+                  >
+                    {config.providers
+                      .filter((p) => p.configured)
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.label}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
             </section>
 
             {/* ── 输入 ── */}
@@ -459,7 +532,7 @@ export default function StudioPage() {
             {/* ── AI 配置说明（面向老师，默认折叠） ── */}
             <details className="no-print rounded-md border border-line bg-panelSolid/50 px-4 py-3 text-[12px] leading-relaxed text-inkFaint">
               <summary className="cursor-pointer font-song text-[12px] tracking-wider text-inkSoft">
-                候选后面的「内置语料 / 集句 / AI 生成」怎么区分？怎么接入自己的 AI
+                候选后面的「内置语料 / 集句 / AI 生成」怎么区分？怎么切换 / 接入 AI 模型
               </summary>
               <div className="mt-2.5 space-y-2">
                 <p>
@@ -476,11 +549,40 @@ export default function StudioPage() {
                   <span className="text-inkSoft">③ AI 生成</span> —— 配了 Key 才有，最贴题。
                 </p>
                 <p>
-                  本项目支持任何「OpenAI 兼容」的模型接口。在项目根目录新建
+                  对韵现在内置了三家「OpenAI 兼容」的 AI 服务商，界面顶部有一个
+                  <b>「AI 模型」下拉框</b>：配了哪家就出现哪家、没配的自动隐藏，
+                  切换后立刻生效（选择记在浏览器里，下次回来还是它）：
+                  <br />
+                  · <span className="text-inkSoft">魔搭 ModelScope</span> —— 用环境变量
+                  <code className="mx-1 rounded bg-accentSoft px-1.5 py-[1px] font-mono text-[12px] text-cinnabarInk">
+                    AI_API_KEY
+                  </code>
+                  ，默认模型 Qwen3.8-Flash-Next；
+                  <br />
+                  · <span className="text-inkSoft">商汤日日新</span> —— 用
+                  <code className="mx-1 rounded bg-accentSoft px-1.5 py-[1px] font-mono text-[12px] text-cinnabarInk">
+                    SENSENOVA_API_KEY
+                  </code>
+                  ，模型 sensenova-6.8-flash-lite；
+                  <br />
+                  · <span className="text-inkSoft">InferX</span> —— 用
+                  <code className="mx-1 rounded bg-accentSoft px-1.5 py-[1px] font-mono text-[12px] text-cinnabarInk">
+                    INFERX_API_KEY
+                  </code>
+                  ，模型 deepseek-v4.1-flash-1017-basic。
+                </p>
+                <p>
+                  部署到 Cloudflare 时，这三把 Key 都去控制台加为
+                  <b>Secret</b>（类型选 Secret，<b>不要</b>写进仓库）；其中魔搭的
+                  <code className="mx-1 rounded bg-accentSoft px-1.5 py-[1px] font-mono text-[12px] text-cinnabarInk">
+                    AI_API_KEY
+                  </code>
+                  线上已经配好。您新加的<b>商汤 / InferX</b> 两把，请到控制台各加一个
+                  同名 Secret 即可，<b>不用改代码</b>。本地自己跑的话，在
                   <code className="mx-1 rounded bg-accentSoft px-1.5 py-[1px] font-mono text-[12px] text-cinnabarInk">
                     .env.local
                   </code>
-                  ，填三行即可（改完要重启服务）：
+                  里填对应那行也行（改完重启服务）：
                 </p>
                 <pre className="overflow-x-auto rounded border border-line bg-panelSolid px-3 py-2 font-mono text-[12px] leading-relaxed text-inkSoft">
 {`AI_BASE_URL=https://api.deepseek.com/v1

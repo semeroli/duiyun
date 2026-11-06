@@ -20,34 +20,128 @@
  */
 
 import { onlyHanzi } from "./tone";
-import { KIND_META, type AllusionAnalysis, type CoupletKind } from "./types";
+import {
+  KIND_META,
+  type AllusionAnalysis,
+  type CoupletKind,
+  type ProviderInfo,
+} from "./types";
 
-/** 与 wrangler.jsonc 的 vars 保持一致：换服务商/换模型时两处一起改 */
-const DEFAULT_BASE_URL = "https://api-inference.modelscope.cn/v1";
-const DEFAULT_MODEL = "Qwen/Qwen3.8-Flash-Next";
+/**
+ * 多服务商清单：对韵现在支持「魔搭 / 商汤日日新 / InferX」三家并存。
+ * 每一家独立用一把 Key（各自不同的环境变量名），界面上用下拉框切换，
+ * 哪家没填 Key 就自动灰掉。换服务商只改这一张表，业务代码其余部分不动。
+ *
+ * thinkingOff 字段说明「这家怎么关掉模型的『思考』」：
+ *   - "modelscope"  用 enable_thinking:false（魔搭 / DeepSeek 系通用写法）
+ *   - "sensenova"   用 reasoning_effort:"none"（商汤日日新专用写法，
+ *                   和魔搭写法不同，写错就关不掉、额度烧在思考上）
+ *   - "none"        不额外发关思考参数（模型本身不是推理模型，或待测）
+ *
+ * 与 wrangler.jsonc 的 vars / Secrets 保持一致：换服务商/换模型时两处一起改。
+ */
+export type ThinkingOffStyle = "modelscope" | "sensenova" | "none";
+
+export interface AiProvider {
+  id: string;
+  /** 界面下拉框与徽标上展示的简短名 */
+  label: string;
+  baseUrl: string;
+  model: string;
+  /** 读取 Key 的环境变量名（每家的 Key 互不干扰） */
+  keyEnv: string;
+  thinkingOff: ThinkingOffStyle;
+}
+
+export const PROVIDERS: AiProvider[] = [
+  {
+    id: "modelscope",
+    label: "魔搭 · Qwen3.8-Flash-Next",
+    baseUrl: "https://api-inference.modelscope.cn/v1",
+    model: "Qwen/Qwen3.8-Flash-Next",
+    keyEnv: "AI_API_KEY",
+    thinkingOff: "modelscope",
+  },
+  {
+    id: "sensenova",
+    label: "商汤日日新 · sensenova-6.8-flash-lite",
+    baseUrl: "https://token.sensenova.cn/v1",
+    model: "sensenova-6.8-flash-lite",
+    keyEnv: "SENSENOVA_API_KEY",
+    thinkingOff: "sensenova",
+  },
+  {
+    // base URL 已在 InferX 控制台（Endpoints → Token-Based）确认：
+    //   共享端点 https://model.inferx.net/endpoints/v1，实际请求打到
+    //   .../endpoints/v1/chat/completions（postChat 会自动补 /chat/completions）。
+    id: "inferx",
+    label: "InferX · deepseek-v4.1-flash",
+    baseUrl: "https://model.inferx.net/endpoints/v1",
+    model: "deepseek-v4.1-flash-1017-basic",
+    keyEnv: "INFERX_API_KEY",
+    // deepseek-v4.1-flash 属 DeepSeek 系，先按 enable_thinking:false 试，
+    // 线上用 ?probe=1&heavy=1 实测，若关不掉思考再调整。
+    thinkingOff: "modelscope",
+  },
+];
+
+const DEFAULT_BASE_URL = PROVIDERS[0].baseUrl;
+const DEFAULT_MODEL = PROVIDERS[0].model;
 
 export interface AiConfig {
   baseUrl: string;
   apiKey: string;
   model: string;
   timeoutMs: number;
+  /** 关思考的写法（按服务商不同） */
+  thinkingStyle: ThinkingOffStyle;
 }
 
 function env(name: string): string {
   return (process.env[name] ?? "").trim();
 }
 
+/** 取某家服务商的配置；不传或传错则回落到魔搭（保持旧行为） */
+export function getAiConfigFor(id: string): AiConfig {
+  const p = PROVIDERS.find((x) => x.id === id) ?? PROVIDERS[0];
+  return {
+    baseUrl: p.baseUrl,
+    apiKey: env(p.keyEnv),
+    model: p.model,
+    timeoutMs: Math.max(5000, Number(env("AI_TIMEOUT_MS")) || 60000),
+    thinkingStyle: p.thinkingOff,
+  };
+}
+
+/** 默认配置（魔搭），保留给体检、本地兜底等不需要指定服务商的地方 */
 export function getAiConfig(): AiConfig {
   return {
     baseUrl: (env("AI_BASE_URL") || DEFAULT_BASE_URL).replace(/\/+$/, ""),
     apiKey: env("AI_API_KEY"),
     model: env("AI_MODEL") || DEFAULT_MODEL,
     timeoutMs: Math.max(5000, Number(env("AI_TIMEOUT_MS")) || 60000),
+    thinkingStyle: "modelscope",
   };
 }
 
-export function isAiConfigured(): boolean {
-  return getAiConfig().apiKey.length > 8;
+/** 列出所有服务商，并标注哪家已经填了 Key（界面据此渲染下拉框） */
+export function listProviders(): ProviderInfo[] {
+  return PROVIDERS.map((p) => ({
+    id: p.id,
+    label: p.label,
+    model: p.model,
+    configured: env(p.keyEnv).length > 8,
+  }));
+}
+
+/** 找到第一个「已经填了 Key 的」服务商 id，作为默认选中项 */
+export function defaultProviderId(): string {
+  const hit = PROVIDERS.find((p) => env(p.keyEnv).length > 8);
+  return hit?.id ?? PROVIDERS[0].id;
+}
+
+export function isAiConfigured(cfg?: AiConfig): boolean {
+  return (cfg ?? getAiConfig()).apiKey.length > 8;
 }
 
 /**
@@ -57,8 +151,8 @@ export function isAiConfigured(): boolean {
  * 部署到 Cloudflare Workers 时 Node 内置模块支持并不完整，
  * 而指纹只是拿来区分「是哪一把 Key」，不需要密码学强度。
  */
-export function aiKeyFingerprint(): string {
-  const key = getAiConfig().apiKey;
+export function aiKeyFingerprint(cfg?: AiConfig): string {
+  const key = (cfg ?? getAiConfig()).apiKey;
   if (!key) return "none";
   let h = 0x811c9dc5;
   for (let i = 0; i < key.length; i++) {
@@ -176,6 +270,23 @@ function normalizeCandidates(data: unknown, upperLen: number): AiCandidateRaw[] 
 }
 
 /**
+ * 按服务商把「关思考」参数写进请求体。
+ * 三家写法不同，写错就关不掉、额度烧在思考上、正文 0 字——
+ * 这是线上实测踩出来的坑（见 wrangler.jsonc 的 AI_MODEL 注释）。
+ */
+function applyThinkingOff(body: Record<string, unknown>, style: ThinkingOffStyle): void {
+  if (style === "modelscope") {
+    // 魔搭 / DeepSeek 系：enable_thinking:false 关掉思考
+    body.enable_thinking = false;
+    body.chat_template_kwargs = { enable_thinking: false };
+  } else if (style === "sensenova") {
+    // 商汤日日新：用 reasoning_effort:"none" 关思考（写法与魔搭不同）
+    body.reasoning_effort = "none";
+  }
+  // style === "none" 时不发任何关思考参数
+}
+
+/**
  * 一次 chat/completions 调用。
  *
  * 🔑 `noThink` 是本项目**最关键的开关**：魔搭上主流模型都是推理模型，会把
@@ -206,12 +317,9 @@ async function postChat(
       max_tokens: 3200,
     };
     if (withJsonMode) body.response_format = { type: "json_object" };
-    if (noThink) {
-      // 关思考的两种常见写法都带上：不认的字段平台一般会忽略，
-      // 万一 400 了，generateWithAi 会自动退回不带它们的版本重试
-      body.enable_thinking = false;
-      body.chat_template_kwargs = { enable_thinking: false };
-    }
+    // 关思考：按服务商用对的写法。不认的字段平台一般会忽略；
+    // 万一 400 了，generateWithAi 会自动退回不带它们的版本重试。
+    if (noThink) applyThinkingOff(body, cfg.thinkingStyle);
 
     return await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
@@ -426,11 +534,8 @@ export async function probeModels(cfg: AiConfig, opts: ProbeOptions): Promise<Mo
             temperature: 0,
           };
       if (opts.jsonMode) body.response_format = { type: "json_object" };
-      // 关思考的两种常见写法都带上，平台不认的字段一般会忽略
-      if (opts.noThink) {
-        body.enable_thinking = false;
-        body.chat_template_kwargs = { enable_thinking: false };
-      }
+      // 关思考：按服务商用对的写法（cfg.thinkingStyle），平台不认的字段一般会忽略
+      if (opts.noThink) applyThinkingOff(body, cfg.thinkingStyle);
 
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs);

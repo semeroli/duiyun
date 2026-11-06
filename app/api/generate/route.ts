@@ -13,10 +13,13 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 import {
   aiKeyFingerprint,
+  defaultProviderId,
   generateWithAi,
-  getAiConfig,
+  getAiConfigFor,
   isAiConfigured,
+  listProviders,
   probeModels,
+  PROVIDERS,
 } from "@/lib/ai";
 import { buildAnalysis } from "@/lib/analyze";
 import { confidentLibraryHits, generateLocal, normalizeUpper } from "@/lib/localEngine";
@@ -25,6 +28,7 @@ import {
   type CoupletCandidate,
   type CoupletKind,
   type GenerateResponse,
+  type ProviderInfo,
 } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -63,12 +67,23 @@ function envProbe() {
       .filter((k) => k !== "ASSETS" && k !== "WORKER_SELF_REFERENCE")
       .sort()
       .slice(0, 20);
-    const keyVal = raw.AI_API_KEY;
+    // 逐个服务商报 Key 是否绑上、长度多少（绝不报值）
+    const keys = PROVIDERS.map((p) => {
+      const present = p.keyEnv in raw;
+      const val = raw[p.keyEnv];
+      return {
+        env: p.keyEnv,
+        label: p.label,
+        present,
+        length: typeof val === "string" ? val.length : null,
+      };
+    });
     return {
       available: true,
       names,
-      apiKeyPresent: "AI_API_KEY" in raw,
-      apiKeyLength: typeof keyVal === "string" ? keyVal.length : null,
+      keys,
+      primaryKeyPresent: keys.find((k) => k.env === "AI_API_KEY")?.present ?? false,
+      primaryKeyLength: keys.find((k) => k.env === "AI_API_KEY")?.length ?? null,
     };
   } catch (e) {
     // 本地 `next dev` 没有 Workers 上下文，走到这里属于正常
@@ -109,10 +124,14 @@ export async function GET(req: Request) {
       const wait = Math.ceil((PROBE_COOLDOWN_MS - (now - lastProbeAt)) / 1000);
       return NextResponse.json({ ok: false, error: `体检冷却中，请 ${wait} 秒后再试` }, { status: 429 });
     }
-    const cfg = getAiConfig();
-    if (!isAiConfigured()) {
+    const providerId = url.searchParams.get("provider") || "modelscope";
+    const cfg = getAiConfigFor(providerId);
+    if (!isAiConfigured(cfg)) {
       return NextResponse.json(
-        { ok: false, error: "还没读到 AI_API_KEY，体检无从谈起（先看同一接口的 envProbe）" },
+        {
+          ok: false,
+          error: `还没读到 ${providerId} 的 Key（${cfg.apiKey ? "已读到但过短" : "未绑定或为空"}），体检无从谈起（先看同一接口的 envProbe）`,
+        },
         { status: 400 }
       );
     }
@@ -137,6 +156,7 @@ export async function GET(req: Request) {
     const rows = await probeModels(cfg, opted);
     return NextResponse.json({
       ok: true,
+      provider: providerId,
       current: cfg.model,
       heavy: opted.heavy,
       noThink: opted.noThink,
@@ -147,15 +167,21 @@ export async function GET(req: Request) {
     });
   }
 
-  const cfg = getAiConfig();
-  const configured = isAiConfigured();
+  const providers: ProviderInfo[] = listProviders();
+  const anyConfigured = providers.some((p) => p.configured);
+  const activeId = defaultProviderId();
+  const active = providers.find((p) => p.id === activeId)!;
+  const cfg = getAiConfigFor(activeId);
   return NextResponse.json({
     ok: true,
-    configured,
-    engine: configured ? "ai" : "local",
-    model: configured ? cfg.model : null,
-    endpoint: cfg.baseUrl,
-    keyFingerprint: aiKeyFingerprint(),
+    configured: anyConfigured,
+    engine: anyConfigured ? "ai" : "local",
+    model: anyConfigured ? active.model : null,
+    provider: anyConfigured ? activeId : null,
+    providers,
+    defaultProvider: activeId,
+    endpoint: anyConfigured ? cfg.baseUrl : null,
+    keyFingerprint: anyConfigured ? aiKeyFingerprint(cfg) : "none",
     envProbe: envProbe(),
     service: "对韵 · /api/generate",
   });
@@ -178,6 +204,8 @@ export async function POST(req: Request) {
   const count = Math.min(5, Math.max(1, Number(body.count) || 3));
   const seedRaw = Number(body.seed);
   const seed = Number.isFinite(seedRaw) ? Math.abs(Math.trunc(seedRaw)) : 0;
+  const providerId = typeof body.provider === "string" ? body.provider : "modelscope";
+  const cfg = getAiConfigFor(providerId);
 
   if (upper.length < 2) return fail("上联至少需要 2 个字");
   if (upper.length > 30) return fail("上联最多 30 个字，再长就不是对联的体例了");
@@ -196,15 +224,15 @@ export async function POST(req: Request) {
     };
   };
 
-  if (!isAiConfigured()) {
+  if (!isAiConfigured(cfg)) {
     // 常驻的小字已经说明「未配置 AI Key」，这里只补一句机制说明，别重复啰嗦
     return NextResponse.json(
-      localResponse("库中命中优先，其次集句（取库中真实句子成对）")
+      localResponse(`未配置 ${providerId} 的 AI Key，已用内置语料 + 集句生成`)
     );
   }
 
   try {
-    const raws = await generateWithAi(upper, kind, count);
+    const raws = await generateWithAi(upper, kind, count, cfg);
 
     const aiCandidates: CoupletCandidate[] = raws.map((r) => ({
       id: `ai-${hashId(upper + r.lower)}`,
@@ -248,6 +276,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       engine: "ai",
+      provider: providerId,
+      model: cfg.model,
       candidates,
       elapsedMs: Date.now() - started,
     } satisfies GenerateResponse);
