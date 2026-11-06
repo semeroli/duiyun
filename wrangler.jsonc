@@ -52,7 +52,7 @@
     // 留空 = 不启用验证，界面与现在完全一样；填上并配好下面的 Secret
     // 之后，工作台才会出现验证框。两个都齐了才生效。
     // 取值：Cloudflare 控制台 → Turnstile → 你的站点 → Site Key
-    "TURNSTILE_SITE_KEY": ""
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAF10kBZ8Lf7EfzGy"
   },
 
   // ─────────────────────────────────────────────────────────────────
