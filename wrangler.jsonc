@@ -45,8 +45,28 @@
     "AI_MODEL": "Qwen/Qwen3.8-Flash-Next",
     // 单次请求超时（毫秒）。推理类模型会先想很久，留足余量；
     // 实测 Cloudflare 上 60 秒级的非流式请求可以正常存活
-    "AI_TIMEOUT_MS": "60000"
+    "AI_TIMEOUT_MS": "60000",
+
+    // ── 人机验证（Cloudflare Turnstile）───────────────────────────
+    // 这是**公开**的 Site Key，浏览器里看得见，放这里没问题。
+    // 留空 = 不启用验证，界面与现在完全一样；填上并配好下面的 Secret
+    // 之后，工作台才会出现验证框。两个都齐了才生效。
+    // 取值：Cloudflare 控制台 → Turnstile → 你的站点 → Site Key
+    "TURNSTILE_SITE_KEY": ""
   },
+
+  // ─────────────────────────────────────────────────────────────────
+  //  人机验证 Secret（必须走控制台 Secret，不能写这里）
+  // ─────────────────────────────────────────────────────────────────
+  //  TURNSTILE_SECRET_KEY  Cloudflare 控制台 → Workers → Settings →
+  //                       Variables → Add variable，类型选 **Secret**
+  //  🔴 建 Turnstile 站点时，域名要填**精确主机名**，不要写通配符：
+  //       ✅ lwdy.de5.net
+  //       ✅ duiyun.labable.workers.dev
+  //       ❌ *.labable.workers.dev / *-duiyun.labable.workers.dev
+  //     Turnstile 的域名列表不接受 `*`，填了会直接报「域名无效」。
+  //  「Verify」说明：校验在服务端做（lib/turnstile.ts），密钥不出 Worker。
+
 
   // ─────────────────────────────────────────────────────────────────
   //  AI 服务商 Secret（密钥，必须走控制台，不要写进仓库）

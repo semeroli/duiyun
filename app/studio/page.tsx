@@ -32,6 +32,7 @@ import LowerOutput from "@/components/LowerOutput";
 import NavBar from "@/components/NavBar";
 import Seal from "@/components/Seal";
 import TipsDrawer from "@/components/TipsDrawer";
+import TurnstileGate from "@/components/TurnstileGate";
 import UpperInput from "@/components/UpperInput";
 import { Badge, Btn } from "@/components/ui";
 import { onlyHanzi } from "@/lib/hanzi";
@@ -75,6 +76,11 @@ export default function StudioPage() {
   } | null>(null);
   /** 当前选中的 AI 服务商（持久化在浏览器，下次回来还是它） */
   const [activeProvider, setActiveProvider] = useState<string>("modelscope");
+  /** 人机验证：Site Key 由服务端下发；token 一次性，生成完立刻换新的 */
+  const [siteKey, setSiteKey] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
+  const onTurnstileToken = useCallback((t: string) => setTurnstileToken(t), []);
 
   const [settings, setSettings] = useState<Settings | null>(null);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
@@ -124,6 +130,7 @@ export default function StudioPage() {
             saved = null;
           }
           setActiveProvider(saved && usable.includes(saved) ? saved : defaultProvider);
+          setSiteKey(typeof json.turnstileSiteKey === "string" ? json.turnstileSiteKey : "");
           setConfig({
             configured: !!json.configured,
             model: json.model ?? null,
@@ -176,6 +183,7 @@ export default function StudioPage() {
             count: 3,
             seed: seedRef.current,
             provider: activeProvider,
+            turnstileToken,
           }),
           cache: "no-store",
         });
@@ -219,9 +227,15 @@ export default function StudioPage() {
         setError(e instanceof Error ? e.message : "生成失败，请换个上联试试");
       } finally {
         setLoading(false);
+        // 人机验证的 token 只能用一次，用完立刻清掉并换一张新的，
+        // 否则下一次生成必然验证失败（那就只能退回内置语料了）
+        if (siteKey) {
+          setTurnstileToken("");
+          setTurnstileReset((n) => n + 1);
+        }
       }
     },
-    [upper, kind, activeProvider, config?.model, S.sound]
+    [upper, kind, activeProvider, config?.model, S.sound, siteKey, turnstileToken]
   );
 
   const activeCandidate = candidates[activeIdx] ?? null;
@@ -429,6 +443,22 @@ export default function StudioPage() {
               }}
               loading={loading}
             />
+
+            {/* ── 人机验证（配了 Site Key 才出现；无感通过，多数人看不到图片题） ── */}
+            {siteKey && (
+              <div className="no-print space-y-1">
+                <TurnstileGate
+                  siteKey={siteKey}
+                  onToken={onTurnstileToken}
+                  resetKey={turnstileReset}
+                />
+                <p className="text-center text-[12px] text-inkFaint">
+                  {turnstileToken
+                    ? "人机验证已通过"
+                    : "人机验证由 Cloudflare 提供 · 稍候一下，多数情况下自动通过"}
+                </p>
+              </div>
+            )}
 
             {/* 引下箭头 */}
             <div className="flex justify-center">

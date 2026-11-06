@@ -22,7 +22,10 @@ import {
   PROVIDERS,
 } from "@/lib/ai";
 import { buildAnalysis } from "@/lib/analyze";
+import { overRateLimit } from "@/lib/auth";
+import { clientIp } from "@/lib/http";
 import { confidentLibraryHits, generateLocal, normalizeUpper } from "@/lib/localEngine";
+import { isTurnstileConfigured, turnstileSiteKey, verifyTurnstile } from "@/lib/turnstile";
 import {
   KIND_META,
   type CoupletCandidate,
@@ -35,6 +38,23 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const KINDS: CoupletKind[] = ["classic", "homophone", "modern"];
+
+/* ── 防刷参数（只保护「AI 调用额度」，与工具可用性无关）─────────────────
+ *
+ * 定这两个数字的唯一难点是**教室场景**：一个班几十台电脑共用一个出口 IP，
+ * 在服务器看来就是「同一个 IP 连点几十次」。所以单 IP 阈值必须给得宽，
+ * 真实的人手点不可能碰到；真正拦脚本的是下面的 Turnstile。
+ *
+ *   AI_PER_IP_LIMIT   单 IP 10 分钟内的 AI 调用上限
+ *   AI_GLOBAL_LIMIT   全站 1 小时内的 AI 调用上限（兜底，防「换 IP 分布式刷」）
+ *
+ * 两道关卡的都是「额度」，过不去只是降级成内置语料 —— 用户照样出下联，
+ * 不会看到报错，也不会白屏。
+ */
+const AI_RATE_WINDOW_MS = 10 * 60 * 1000;
+const AI_PER_IP_LIMIT = 150;
+const AI_GLOBAL_WINDOW_MS = 60 * 60 * 1000;
+const AI_GLOBAL_LIMIT = 600;
 
 function hashId(s: string): string {
   let h = 5381;
@@ -182,6 +202,10 @@ export async function GET(req: Request) {
     defaultProvider: activeId,
     endpoint: anyConfigured ? cfg.baseUrl : null,
     keyFingerprint: anyConfigured ? aiKeyFingerprint(cfg) : "none",
+    // 人机验证的公开 Site Key：**两个 Key 都配好才下发**，
+    // 只配一半就当作没开（前端不出现验证框，服务端也直接放行），
+    // 免得出现「框弹出来了却永远验不过」这种半吊子状态。
+    turnstileSiteKey: isTurnstileConfigured() ? turnstileSiteKey() : "",
     envProbe: envProbe(),
     service: "对韵 · /api/generate",
   });
@@ -228,6 +252,35 @@ export async function POST(req: Request) {
     // 常驻的小字已经说明「未配置 AI Key」，这里只补一句机制说明，别重复啰嗦
     return NextResponse.json(
       localResponse(`未配置 ${providerId} 的 AI Key，已用内置语料 + 集句生成`)
+    );
+  }
+
+  /* ── 三道闸：单 IP 限流 → 人机验证 → 全站总闸 ─────────────────────
+   * 只有走到这里（即真的要花 AI 额度）才拦；本机引擎不设任何门槛。
+   * 任何一道没过都**降级到内置语料并说明原因**，不返回错误码 ——
+   * 老师的课堂上最忌讳「点了按钮弹红字」。
+   */
+  const ip = clientIp(req);
+
+  if (await overRateLimit(`generate:ip:${ip}`, AI_PER_IP_LIMIT, AI_RATE_WINDOW_MS)) {
+    return NextResponse.json(
+      localResponse("这台设备的生成请求太频繁，先用内置语料给您对一联；过一会儿再点就恢复 AI")
+    );
+  }
+
+  const check = await verifyTurnstile(
+    typeof body.turnstileToken === "string" ? body.turnstileToken : "",
+    ip
+  );
+  if (!check.ok) {
+    return NextResponse.json(
+      localResponse(`人机验证没过（${check.reason}），先用内置语料给您对一联`)
+    );
+  }
+
+  if (await overRateLimit("generate:global", AI_GLOBAL_LIMIT, AI_GLOBAL_WINDOW_MS)) {
+    return NextResponse.json(
+      localResponse("全站 AI 用量刚触到保护上限，先用内置语料给您对一联；下一时段自动恢复")
     );
   }
 
