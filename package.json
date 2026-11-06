@@ -10,7 +10,8 @@
     "start:local": "next start -p 4311",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "node scripts/patch-opennext.cjs"
   },
   "dependencies": {
     "framer-motion": "14.1.0",
@@ -21,7 +22,7 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "1.15.0",
+    "@opennextjs/cloudflare": "^1.20.10",
     "@types/node": "^22.0.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
